@@ -10,6 +10,8 @@
 
 -behaviour(supervisor).
 
+-define(TWEET_1, "http://127.0.0.1:4000/tweets/1").
+
 -export([start_link/0]).
 -export([init/1]).
 
@@ -27,5 +29,8 @@ init([]) ->
         period => MaxSecondsBetweenRestarts
     },
 
-    ChildSpecs = [],
+    RequestSender = request_sender:get_specs(0, ?TWEET_1),
+    ChildSpecs = [
+        RequestSender
+    ],
     {ok, {SupFlags, ChildSpecs}}.
