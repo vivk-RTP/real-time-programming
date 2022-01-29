@@ -42,6 +42,10 @@ handle_cast(_Request, State) ->
 handle_info({http, {_RequestId, stream_start, _Headers}}, State) ->
 	io:format("[~p] sse_handler's `stream start` with `headers`=~p.~n", [self(), _Headers]),
 	{noreply, State};
+handle_info({http, {_RequestId, {error, _Reason}}}, State) ->
+	Error = io_lib:format("[~p] sse_handler's `error` with `reason`=`~p`.~n", [self(), _Reason]),
+	error_logger:error_msg(Error),
+	{stop, normal, State};
 handle_info({http, {_RequestId, stream, _Data}}, State) ->
 %%	io:format("Info Data ~p~n",[_Data]),
 	{noreply, State};
