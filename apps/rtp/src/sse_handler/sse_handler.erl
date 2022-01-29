@@ -5,7 +5,7 @@
 %%% @end
 %%%-------------------------------------------------------------------
 
--module(request_sender).
+-module(sse_handler).
 
 -behaviour(gen_server).
 
@@ -21,15 +21,15 @@ start_link(Url) ->
 	gen_server:start_link(?MODULE, Url, []).
 
 init(Url) when is_list(Url) =:= false ->
-	error_logger:error_msg(["[~p] request_sender's `init` was crashed! "++
-							"`Url`=`~p` param is not a list.~n"], [self(), Url]),
+	error_logger:error_msg(["[~p] sse_handler's `init` was crashed! "++
+		"`Url`=`~p` param is not a list.~n"], [self(), Url]),
 	{stop, error};
 init(Url) when length(Url) =:= 0 ->
-	error_logger:error_msg(["[~p] request_sender's `init` was crashed! "++
-							"`Url`=`~p` param is empty.~n"], [self(), Url]),
+	error_logger:error_msg(["[~p] sse_handler's `init` was crashed! "++
+		"`Url`=`~p` param is empty.~n"], [self(), Url]),
 	{stop, error};
 init(Url) ->
-	io:format("[~p] request_sender's `init` with `Url`=`~p` is called.~n", [self(), Url]),
+	io:format("[~p] sse_handler's `init` with `Url`=`~p` is called.~n", [self(), Url]),
 	{ok, []}.
 
 handle_call(_Request, _From, State) ->
@@ -47,12 +47,12 @@ handle_info(_Info, State) ->
 
 get_specs(Id, Url) ->
 	#{
-		id => Id,
-		start => {request_sender, start_link, [Url]},
+		id => integer_to_list(Id)++"_sse_handler",
+		start => {sse_handler, start_link, [Url]},
 		restart => permanent,
 		shutdown => infinity,
 		type => worker,
-		modules => [request_sender]
+		modules => [sse_handler]
 	}.
 
 %%%===================================================================

@@ -29,8 +29,8 @@ init([]) ->
         period => MaxSecondsBetweenRestarts
     },
 
-    RequestSender = request_sender:get_specs(0, ?TWEET_1),
+    SSEHandler = sse_handler:get_specs(0, ?TWEET_1),
     ChildSpecs = [
-        RequestSender
+        SSEHandler
     ],
     {ok, {SupFlags, ChildSpecs}}.
