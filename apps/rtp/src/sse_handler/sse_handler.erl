@@ -39,8 +39,11 @@ handle_call(_Request, _From, State) ->
 handle_cast(_Request, State) ->
 	{noreply, State}.
 
-handle_info({http, {_RequestId, stream, Data}}, State) ->
-	io:format("Info Data ~p~n",[Data]),
+handle_info({http, {_RequestId, stream_start, _Headers}}, State) ->
+	io:format("[~p] sse_handler's `stream start` with `headers`=~p.~n", [self(), _Headers]),
+	{noreply, State};
+handle_info({http, {_RequestId, stream, _Data}}, State) ->
+%%	io:format("Info Data ~p~n",[_Data]),
 	{noreply, State};
 handle_info(_Info, State) ->
 	io:format("~p~n", [_Info]),
