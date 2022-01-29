@@ -30,7 +30,7 @@ init(Url) when length(Url) =:= 0 ->
 	{stop, error};
 init(Url) ->
 	io:format("[~p] sse_handler's `init` with `Url`=`~p` is called.~n", [self(), Url]),
-	httpc:request(get, {Url, []}, [], [{sync, false}, {stream, self}]),
+	sse_connection:new(Url, self),
 	{ok, []}.
 
 handle_call(_Request, _From, State) ->
