@@ -45,7 +45,7 @@ handle_info({http, {_RequestId, stream_start, _Headers}}, State) ->
 handle_info({http, {_RequestId, {error, _Reason}}}, State) ->
 	Error = io_lib:format("[~p] sse_handler's `error` with `reason`=`~p`.~n", [self(), _Reason]),
 	error_logger:error_msg(Error),
-	{stop, normal, State};
+	{stop, _Reason, State};
 handle_info({http, {_RequestId, stream_end, _Headers}}, State) ->
 	Error = io_lib:format("[~p] sse_handler's `stream end` with `headers`=~p.~n", [self(), _Headers]),
 	error_logger:error_msg(Error),
@@ -65,7 +65,7 @@ get_specs(Id, Url) ->
 	#{
 		id => integer_to_list(Id)++"_sse_handler",
 		start => {sse_handler, start_link, [Url]},
-		restart => permanent,
+		restart => transient,
 		shutdown => infinity,
 		type => worker,
 		modules => [sse_handler]
