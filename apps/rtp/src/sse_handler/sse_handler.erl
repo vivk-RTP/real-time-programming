@@ -52,7 +52,8 @@ handle_info({http, {_RequestId, stream_end, _Headers}}, State) ->
 	{stop, normal, State};
 handle_info({http, {_RequestId, stream, _Data}}, State) ->
 %%	io:format("Info Data ~p~n",[_Data]),
-	{noreply, State};
+	NewState = message_handle(_Data, State),
+	{noreply, NewState};
 handle_info(_Info, State) ->
 	io:format("~p~n", [_Info]),
 	{noreply, State}.
@@ -74,3 +75,17 @@ get_specs(Id, Url) ->
 %%%===================================================================
 %%% Internal functions
 %%%===================================================================
+
+-define(MESSAGE_END, [10, 10]).
+
+message_handle(BMessage, State) when is_atom(BMessage) =:= false ->
+	Message = binary_to_list(BMessage),
+	NewState = State++Message,
+	IsFin = lists:suffix(?MESSAGE_END, Message),
+	message_handle(IsFin, NewState);
+message_handle(false, NewState) ->
+	NewState;
+message_handle(true, Message) ->
+	io:format("message_handle's result:~n~s~n", [Message]),
+	[].
+
