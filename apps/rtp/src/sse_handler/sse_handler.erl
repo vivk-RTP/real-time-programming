@@ -50,9 +50,8 @@ handle_info({http, {_RequestId, stream_end, _Headers}}, State) ->
 	Error = io_lib:format("[~p] sse_handler's `stream end` with `headers`=~p.~n", [self(), _Headers]),
 	error_logger:error_msg(Error),
 	{stop, normal, State};
-handle_info({http, {_RequestId, stream, _Data}}, State) ->
-%%	io:format("Info Data ~p~n",[_Data]),
-	NewState = message_handle(_Data, State),
+handle_info({http, {_RequestId, stream, Message}}, State) ->
+	NewState = message_handle(Message, State),
 	{noreply, NewState};
 handle_info(_Info, State) ->
 	io:format("~p~n", [_Info]),
@@ -76,16 +75,22 @@ get_specs(Id, Url) ->
 %%% Internal functions
 %%%===================================================================
 
--define(MESSAGE_END, [10, 10]).
+-define(MESSAGE_START, "event: \"message\"\n\ndata: ").
+-define(MESSAGE_END, "\n\n").
+-define(EMPTY_LIST, []).
 
-message_handle(BMessage, State) when is_atom(BMessage) =:= false ->
-	Message = binary_to_list(BMessage),
-	NewState = State++Message,
-	IsFin = lists:suffix(?MESSAGE_END, Message),
-	message_handle(IsFin, NewState);
-message_handle(false, NewState) ->
-	NewState;
-message_handle(true, Message) ->
-	io:format("message_handle's result:~n~s~n", [Message]),
-	[].
+message_handle(BMessage, State) ->
+	LMessage = binary_to_list(BMessage),
+	LMessageData = replace_string(LMessage, ?MESSAGE_START, ?EMPTY_LIST),
+	LTweets = string:split(State++LMessageData, ?MESSAGE_END),
+	NewState = process_messages(LTweets),
+	NewState.
 
+process_messages([Head|[]]) ->
+	Head;
+process_messages([Head|Tails]) ->
+	io:format("~n~n~nmessage_handle's find_tweet :~n~s~n", [Head]),
+	process_messages(Tails).
+
+replace_string(Source, ReplaceOf, ReplaceOn) ->
+	re:replace(Source, ReplaceOf, ReplaceOn, [global, {return, list}]).
