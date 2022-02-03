@@ -53,4 +53,4 @@ divide_tweets([Head|Tails], _SendMessageFunc) ->
 %%--------------------------------------------------------------------
 
 send_message(Message) ->
-	io:format("~n~n~n[WIP] will send tweet to some worker :~n~s~n", [Message]).
+	io:format("~n~n~n[~p][WIP] will send tweet to some worker :~n~s~n", [self(), Message]).
