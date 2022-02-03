@@ -81,7 +81,7 @@ get_specs(Id, Url) ->
 
 message_handle(BMessage, State) ->
 	LMessage = binary_to_list(BMessage),
-	LMessageData = replace_string(LMessage, ?MESSAGE_START, ?EMPTY_LIST),
+	LMessageData = strings:replace(LMessage, ?MESSAGE_START, ?EMPTY_LIST),
 	LTweets = string:split(State++LMessageData, ?MESSAGE_END),
 	NewState = process_messages(LTweets),
 	NewState.
@@ -92,5 +92,3 @@ process_messages([Head|Tails]) ->
 	io:format("~n~n~nmessage_handle's find_tweet :~n~s~n", [Head]),
 	process_messages(Tails).
 
-replace_string(Source, ReplaceOf, ReplaceOn) ->
-	re:replace(Source, ReplaceOf, ReplaceOn, [global, {return, list}]).
