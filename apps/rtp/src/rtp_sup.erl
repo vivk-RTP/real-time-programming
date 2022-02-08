@@ -10,6 +10,9 @@
 
 -behaviour(supervisor).
 
+-define(TWEET_1, "http://127.0.0.1:4000/tweets/1").
+-define(TWEET_2, "http://127.0.0.1:4000/tweets/2").
+
 -export([start_link/0]).
 -export([init/1]).
 
@@ -27,5 +30,8 @@ init([]) ->
         period => MaxSecondsBetweenRestarts
     },
 
-    ChildSpecs = [],
+    SSEHandlerSup = sse_handler_sup:get_specs([?TWEET_1, ?TWEET_2]),
+    ChildSpecs = [
+        SSEHandlerSup
+    ],
     {ok, {SupFlags, ChildSpecs}}.
