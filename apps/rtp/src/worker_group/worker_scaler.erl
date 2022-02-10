@@ -1,7 +1,13 @@
 %%%-------------------------------------------------------------------
 %%% @author Volcov Oleg
 %%% @copyright (C) 2022, FAF-191
-%%% @doc
+%%% @doc Calculate average count of needed workers and set it.
+%%%
+%%%      Count the number of messages to provide
+%%%         by @inc async endpoint.
+%%%      Every @INTERVAL of milliseconds count average
+%%%         amount of messages and decide how many
+%%%         workers is needed.
 %%% @end
 %%%-------------------------------------------------------------------
 
@@ -15,7 +21,7 @@
 
 -define(COUNT_OF_ITERATIONS, 10).
 -define(WORKER_SUP, worker_sup).
--define(ONE_SECOND, 1000).
+-define(INTERVAL, 1000).
 
 -record(worker_scaler_state, {current, prev_average}).
 
@@ -31,7 +37,7 @@ init([]) ->
 
 	NewState = #worker_scaler_state{current = 0, prev_average = 0},
 
-	erlang:send_after(?ONE_SECOND, self(), trigger),
+	erlang:send_after(?INTERVAL, self(), trigger),
 	{ok, NewState}.
 
 handle_call(_Request, _From, State = #worker_scaler_state{}) ->
@@ -53,7 +59,7 @@ handle_info(trigger, State = #worker_scaler_state{}) ->
 	NewState = State#worker_scaler_state{current = 0, prev_average = Average},
 	io:format("[~p] worker_scaler's `re-scale` with Diff=~p and NewState=~p is called.~n", [self(), Diff, NewState]),
 
-	erlang:send_after(?ONE_SECOND, self(), trigger),
+	erlang:send_after(?INTERVAL, self(), trigger),
 	{noreply, NewState};
 handle_info(_Info, State = #worker_scaler_state{}) ->
 	{noreply, State}.
