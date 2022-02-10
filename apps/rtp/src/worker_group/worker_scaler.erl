@@ -23,6 +23,8 @@
 -define(WORKER_SUP, worker_sup).
 -define(INTERVAL, 1000).
 
+-define(START_WORKER_COUNT, 100).
+
 -record(worker_scaler_state, {current, prev_average}).
 
 %%%===================================================================
@@ -36,6 +38,8 @@ init([]) ->
 	io:format("[~p] worker_scaler's `init` with is called.~n", [self()]),
 
 	NewState = #worker_scaler_state{current = 0, prev_average = 0},
+
+	set_workers(?START_WORKER_COUNT),
 
 	erlang:send_after(?INTERVAL, self(), trigger),
 	{ok, NewState}.
