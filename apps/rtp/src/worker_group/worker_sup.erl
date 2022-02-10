@@ -19,7 +19,7 @@ init([]) ->
     MaxRestarts = 100,
     MaxSecondsBetweenRestarts = 10,
     SupFlags = #{
-        strategy => one_for_one,
+        strategy => simple_one_for_one,
         intensity => MaxRestarts,
         period => MaxSecondsBetweenRestarts
     },
