@@ -44,6 +44,8 @@ handle_info(trigger, State = #worker_scaler_state{}) ->
 	{Current, PrevAverage} = State,
 	{Average, Diff} = calculate_difference(Current, PrevAverage),
 
+	set_workers(Diff),
+
 	NewState = State#worker_scaler_state{current = 0, prev_average = Average},
 	io:format("[~p] worker_scaler's `re-scale` with Diff=~p and NewState=~p is called.~n", [self(), Diff, NewState]),
 
@@ -82,3 +84,8 @@ calculate_difference(Current, PrevAverage) ->
 	WorkersCount = length(WorkerPIDs),
 
 	{Average, Average div 10 - WorkersCount}.
+
+set_workers(Diff) when Diff >= 0 ->
+	worker_sup:start_worker(Diff);
+set_workers(Diff) when Diff < 0 ->
+	worker_sup:stop_worker(-Diff).

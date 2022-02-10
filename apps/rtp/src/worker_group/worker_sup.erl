@@ -52,8 +52,14 @@ start_worker(Count) when Count > 0 ->
 start_worker(Count) when Count =< 0 ->
     ok.
 
+stop_worker(Count) when Count > 0 ->
+    WorkerPIDs = supervisor:which_children(?MODULE),
+    stop_worker(WorkerPIDs);
+stop_worker(Count) when Count =< 0 ->
+    ok;
 stop_worker([Head|Tails] = _WorkerPIDs) ->
-    supervisor:terminate_child(?MODULE, Head),
+    {_, PID, _, _} = Head,
+    supervisor:terminate_child(?MODULE, PID),
     stop_worker(Tails);
 stop_worker([] = _WorkerPIDs) ->
     ok.
