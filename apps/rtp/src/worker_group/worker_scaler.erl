@@ -37,6 +37,10 @@ init([]) ->
 handle_call(_Request, _From, State = #worker_scaler_state{}) ->
 	{reply, ok, State}.
 
+handle_cast(inc, State = #worker_scaler_state{}) ->
+	{Current, _} = State,
+	NewState = State#worker_scaler_state{current = Current+1},
+	{noreply, NewState};
 handle_cast(_Request, State = #worker_scaler_state{}) ->
 	{noreply, State}.
 
