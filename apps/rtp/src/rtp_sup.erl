@@ -31,7 +31,15 @@ init([]) ->
     },
 
     SSEHandlerSup = sse_handler_sup:get_specs([?TWEET_1, ?TWEET_2]),
+    WorkerSup = worker_sup:get_specs(),
+    WorkerManager = worker_manager:get_specs(),
+    WorkerScaler = worker_scaler:get_specs(),
+
     ChildSpecs = [
+        WorkerSup,
+        WorkerManager,
+        WorkerScaler,
         SSEHandlerSup
     ],
+
     {ok, {SupFlags, ChildSpecs}}.
