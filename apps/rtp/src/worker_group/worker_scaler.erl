@@ -13,6 +13,8 @@
 -export([init/1, handle_call/3, handle_cast/2, handle_info/2]).
 -export([get_specs/0]).
 
+-define(COUNT_OF_ITERATIONS, 10).
+-define(WORKER_SUP, worker_sup).
 -define(ONE_SECOND, 1000).
 
 -record(worker_scaler_state, {current, prev_average}).
@@ -25,8 +27,12 @@ start_link() ->
 	gen_server:start_link({local, ?MODULE}, ?MODULE, [], []).
 
 init([]) ->
+	io:format("[~p] worker_scaler's `init` with is called.~n", [self()]),
+
+	NewState = #worker_scaler_state{current = 0, prev_average = 0},
+
 	erlang:send_after(?ONE_SECOND, self(), trigger),
-	{ok, #worker_scaler_state{}}.
+	{ok, NewState}.
 
 handle_call(_Request, _From, State = #worker_scaler_state{}) ->
 	{reply, ok, State}.
@@ -35,8 +41,14 @@ handle_cast(_Request, State = #worker_scaler_state{}) ->
 	{noreply, State}.
 
 handle_info(trigger, State = #worker_scaler_state{}) ->
+	{Current, PrevAverage} = State,
+	{Average, Diff} = calculate_difference(Current, PrevAverage),
+
+	NewState = State#worker_scaler_state{current = 0, prev_average = Average},
+	io:format("[~p] worker_scaler's `re-scale` with Diff=~p and NewState=~p is called.~n", [self(), Diff, NewState]),
+
 	erlang:send_after(?ONE_SECOND, self(), trigger),
-	{noreply, State};
+	{noreply, NewState};
 handle_info(_Info, State = #worker_scaler_state{}) ->
 	{noreply, State}.
 
@@ -58,3 +70,15 @@ get_specs() ->
 %%% Internal functions
 %%%===================================================================
 
+calculate_average(PrevAverage, NewAverage) when PrevAverage =:= 0 ->
+	NewAverage;
+calculate_average(PrevAverage, NewAverage) ->
+	PrevAverage - (PrevAverage / ?COUNT_OF_ITERATIONS) + (NewAverage / ?COUNT_OF_ITERATIONS).
+
+calculate_difference(Current, PrevAverage) ->
+	Average = calculate_average(PrevAverage, Current),
+
+	WorkerPIDs = supervisor:which_children(?WORKER_SUP),
+	WorkersCount = length(WorkerPIDs),
+
+	{Average, Average div 10 - WorkersCount}.
