@@ -41,5 +41,19 @@ handle_info(_Info, State = #worker_manager_state{}) ->
 	{noreply, State}.
 
 %%%===================================================================
+%%% External functions
+%%%===================================================================
+
+get_specs() ->
+	#{
+		id => worker_manager,
+		start => {worker_manager, start_link, []},
+		restart => permanent,
+		shutdown => infinity,
+		type => worker,
+		modules => [worker_manager]
+	}.
+
+%%%===================================================================
 %%% Internal functions
 %%%===================================================================
