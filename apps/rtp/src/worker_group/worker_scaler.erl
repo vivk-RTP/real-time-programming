@@ -43,15 +43,15 @@ init([]) ->
 handle_call(_Request, _From, State = #worker_scaler_state{}) ->
 	{reply, ok, State}.
 
-handle_cast(inc, State = #worker_scaler_state{}) ->
-	{Current, _} = State,
+handle_cast({inc}, State = #worker_scaler_state{}) ->
+	{worker_scaler_state, Current, _} = State,
 	NewState = State#worker_scaler_state{current = Current+1},
 	{noreply, NewState};
 handle_cast(_Request, State = #worker_scaler_state{}) ->
 	{noreply, State}.
 
 handle_info(trigger, State = #worker_scaler_state{}) ->
-	{Current, PrevAverage} = State,
+	{worker_scaler_state, Current, PrevAverage} = State,
 	{Average, Diff} = calculate_difference(Current, PrevAverage),
 
 	set_workers(Diff),
@@ -93,7 +93,7 @@ calculate_difference(Current, PrevAverage) ->
 	WorkerPIDs = supervisor:which_children(?WORKER_SUP),
 	WorkersCount = length(WorkerPIDs),
 
-	{Average, Average div 10 - WorkersCount}.
+	{Average, round(Average) div 10 - WorkersCount}.
 
 set_workers(Diff) when Diff >= 0 ->
 	worker_sup:start_worker(Diff);
