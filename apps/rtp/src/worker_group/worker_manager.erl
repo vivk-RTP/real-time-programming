@@ -11,6 +11,9 @@
 
 -export([start_link/0]).
 -export([init/1, handle_call/3, handle_cast/2, handle_info/2]).
+-export([get_specs/0]).
+
+-define(WORKER_SCALER, worker_scaler).
 
 -record(worker_manager_state, {}).
 
@@ -28,7 +31,7 @@ handle_call(_Request, _From, State = #worker_manager_state{}) ->
 	{reply, ok, State}.
 
 handle_cast({tweet, _Tweet}, State = #worker_manager_state{}) ->
-	%% TODO: Manage system scaling
+	gen_server:cast(?WORKER_SCALER, {inc}),
 	%% TODO: Find `worker` and send it
 	{noreply, State};
 handle_cast(_Request, State = #worker_manager_state{}) ->
