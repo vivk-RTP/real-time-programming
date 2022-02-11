@@ -11,6 +11,8 @@
 -define(MESSAGE_END, "\n\n").
 -define(EMPTY_LIST, []).
 
+-define(WORKER_MANAGER, worker_manager).
+
 -export([process/2]).
 
 %%--------------------------------------------------------------------
@@ -26,7 +28,7 @@ process(BMessage, State) ->
 	LMessage = binary_to_list(BMessage),
 	LMessageData = strings:replace(LMessage, ?MESSAGE_START, ?EMPTY_LIST),
 	LTweets = string:split(State++LMessageData, ?MESSAGE_END),
-	NewState = divide_tweets(LTweets, fun(Message) -> send_message(Message) end),
+	NewState = divide_tweets(LTweets),
 	NewState.
 
 %%%===================================================================
@@ -41,11 +43,11 @@ process(BMessage, State) ->
 %% @end
 %%--------------------------------------------------------------------
 
-divide_tweets([Head|[]], _SendMessageFunc) ->
+divide_tweets([Head|[]]) ->
 	Head;
-divide_tweets([Head|Tails], _SendMessageFunc) ->
-	_SendMessageFunc(Head),
-	divide_tweets(Tails, _SendMessageFunc).
+divide_tweets([Head|Tails]) ->
+	send_message(Head),
+	divide_tweets(Tails).
 
 %%--------------------------------------------------------------------
 %% @doc Send tweet data in @Message for future processing.
@@ -53,4 +55,4 @@ divide_tweets([Head|Tails], _SendMessageFunc) ->
 %%--------------------------------------------------------------------
 
 send_message(Message) ->
-	io:format("~n~n~n[~p][WIP] will send tweet to some worker :~n~s~n", [self(), Message]).
+	gen_server:cast(?WORKER_MANAGER, {tweet, Message}).
