@@ -1,7 +1,10 @@
 %%%-------------------------------------------------------------------
 %%% @author Volcov Oleg
 %%% @copyright (C) 2022, FAF-191
-%%% @doc
+%%% @doc Actor to receive `JSON data` from `sse_handler`,
+%%%         notify ‘worker_scaler’ about new message,
+%%%         choose specific ‘worker’ by ‘round-robin distribution’
+%%%         and send `JSON data` to this ‘worker’.
 %%% @end
 %%%-------------------------------------------------------------------
 
