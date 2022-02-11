@@ -14,6 +14,7 @@
 -export([get_specs/0]).
 
 -define(WORKER_SCALER, worker_scaler).
+-define(WORKER_SUP, worker_sup).
 
 %%%===================================================================
 %%% Spawning and gen_server implementation
@@ -31,7 +32,17 @@ handle_call(_Request, _From, State) ->
 handle_cast({tweet, _Tweet}, State) ->
 	gen_server:cast(?WORKER_SCALER, {inc}),
 	%% TODO: Find `worker` and send it
-	{noreply, State};
+	WorkerPIDs = supervisor:which_children(?WORKER_SUP),
+	WorkerCount = length(WorkerPIDs),
+
+	NewIndex = round_robin_distribution(State, WorkerCount),
+
+	NthResult = lists:nth(NewIndex, WorkerPIDs),
+	{_, WorkerPID, _, _} = NthResult,
+
+	io:format("[~p] worker_manager's `tweet` with Index=~p and PID=~p is called.~n", [self(), NewIndex, WorkerPID]),
+
+	{noreply, NewIndex};
 handle_cast(_Request, State) ->
 	{noreply, State}.
 
@@ -55,3 +66,8 @@ get_specs() ->
 %%%===================================================================
 %%% Internal functions
 %%%===================================================================
+
+round_robin_distribution(_Index, _Length) when _Index < _Length ->
+	_Index + 1;
+round_robin_distribution(_Index, _Length) ->
+	1.
