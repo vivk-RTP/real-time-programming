@@ -34,9 +34,13 @@
    2. Function call: <b>stop_worker/1</b>, when Count - integer<br />
       Stop ‘Count’ amount of workers.
 
-## Communication Diagram
+## Supervision Tree 
 
-![Communication-Diagram](docs/imgs/rtp-diagram.jpg)
+![Supervision-Tree](docs/imgs/supervision-tree.jpg)
+
+## Message Exchange Diagram
+
+![Message-Exchange-Diagram](docs/imgs/message-exchange.jpg)
 
 ### PDF version of documentation:
 
