@@ -15,8 +15,6 @@
 
 -define(WORKER_SCALER, worker_scaler).
 
--record(worker_manager_state, {}).
-
 %%%===================================================================
 %%% Spawning and gen_server implementation
 %%%===================================================================
@@ -25,19 +23,19 @@ start_link() ->
 	gen_server:start_link({local, ?MODULE}, ?MODULE, [], []).
 
 init([]) ->
-	{ok, #worker_manager_state{}}.
+	{ok, 0}.
 
-handle_call(_Request, _From, State = #worker_manager_state{}) ->
+handle_call(_Request, _From, State) ->
 	{reply, ok, State}.
 
-handle_cast({tweet, _Tweet}, State = #worker_manager_state{}) ->
+handle_cast({tweet, _Tweet}, State) ->
 	gen_server:cast(?WORKER_SCALER, {inc}),
 	%% TODO: Find `worker` and send it
 	{noreply, State};
-handle_cast(_Request, State = #worker_manager_state{}) ->
+handle_cast(_Request, State) ->
 	{noreply, State}.
 
-handle_info(_Info, State = #worker_manager_state{}) ->
+handle_info(_Info, State) ->
 	{noreply, State}.
 
 %%%===================================================================
