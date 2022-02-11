@@ -30,9 +30,8 @@ init([]) ->
 handle_call(_Request, _From, State) ->
 	{reply, ok, State}.
 
-handle_cast({tweet, _Tweet}, State) ->
+handle_cast({tweet, Tweet}, State) ->
 	gen_server:cast(?WORKER_SCALER, {inc}),
-	%% TODO: Find `worker` and send it
 	WorkerPIDs = supervisor:which_children(?WORKER_SUP),
 	WorkerCount = length(WorkerPIDs),
 
@@ -41,8 +40,7 @@ handle_cast({tweet, _Tweet}, State) ->
 	NthResult = lists:nth(NewIndex, WorkerPIDs),
 	{_, WorkerPID, _, _} = NthResult,
 
-	io:format("[~p] worker_manager's `tweet` with Index=~p and PID=~p is called.~n", [self(), NewIndex, WorkerPID]),
-
+	gen_server:cast(WorkerPID, {tweet, Tweet}),
 	{noreply, NewIndex};
 handle_cast(_Request, State) ->
 	{noreply, State}.
