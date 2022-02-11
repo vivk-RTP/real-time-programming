@@ -21,6 +21,7 @@
 %%%===================================================================
 
 start_link() ->
+	io:format("[~p] worker_manager's `init` with is called.~n", [self()]),
 	gen_server:start_link({local, ?MODULE}, ?MODULE, [], []).
 
 init([]) ->
