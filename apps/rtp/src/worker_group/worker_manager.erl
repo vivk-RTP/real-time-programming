@@ -1,7 +1,10 @@
 %%%-------------------------------------------------------------------
 %%% @author Volcov Oleg
 %%% @copyright (C) 2022, FAF-191
-%%% @doc
+%%% @doc Actor to receive `JSON data` from `sse_handler`,
+%%%         notify ‘worker_scaler’ about new message,
+%%%         choose specific ‘worker’ by ‘round-robin distribution’
+%%%         and send `JSON data` to this ‘worker’.
 %%% @end
 %%%-------------------------------------------------------------------
 
@@ -14,30 +17,38 @@
 -export([get_specs/0]).
 
 -define(WORKER_SCALER, worker_scaler).
-
--record(worker_manager_state, {}).
+-define(WORKER_SUP, worker_sup).
 
 %%%===================================================================
 %%% Spawning and gen_server implementation
 %%%===================================================================
 
 start_link() ->
+	io:format("[~p] worker_manager's `init` with is called.~n", [self()]),
 	gen_server:start_link({local, ?MODULE}, ?MODULE, [], []).
 
 init([]) ->
-	{ok, #worker_manager_state{}}.
+	{ok, 0}.
 
-handle_call(_Request, _From, State = #worker_manager_state{}) ->
+handle_call(_Request, _From, State) ->
 	{reply, ok, State}.
 
-handle_cast({tweet, _Tweet}, State = #worker_manager_state{}) ->
+handle_cast({tweet, Tweet}, State) ->
 	gen_server:cast(?WORKER_SCALER, {inc}),
-	%% TODO: Find `worker` and send it
-	{noreply, State};
-handle_cast(_Request, State = #worker_manager_state{}) ->
+	WorkerPIDs = supervisor:which_children(?WORKER_SUP),
+	WorkerCount = length(WorkerPIDs),
+
+	NewIndex = round_robin_distribution(State, WorkerCount),
+
+	NthResult = lists:nth(NewIndex, WorkerPIDs),
+	{_, WorkerPID, _, _} = NthResult,
+
+	gen_server:cast(WorkerPID, {tweet, Tweet}),
+	{noreply, NewIndex};
+handle_cast(_Request, State) ->
 	{noreply, State}.
 
-handle_info(_Info, State = #worker_manager_state{}) ->
+handle_info(_Info, State) ->
 	{noreply, State}.
 
 %%%===================================================================
@@ -57,3 +68,8 @@ get_specs() ->
 %%%===================================================================
 %%% Internal functions
 %%%===================================================================
+
+round_robin_distribution(_Index, _Length) when _Index < _Length ->
+	_Index + 1;
+round_robin_distribution(_Index, _Length) ->
+	1.
