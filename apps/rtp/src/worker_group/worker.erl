@@ -27,12 +27,19 @@ init([]) ->
 handle_call(_Request, _From, State = #worker_state{}) ->
 	{reply, ok, State}.
 
-handle_cast({tweet, Tweet}, State = #worker_state{}) ->
-	io:format("~n[WIP][~p] Tweet:~n~s~n", [self(), Tweet]),
-	%% TODO: Worker behaviour implementation
-	NewState = State#worker_state{last_tweet = Tweet},
+handle_cast({tweet, JSONData}, State = #worker_state{}) ->
+	BJSONData = list_to_binary(JSONData),
+
+	JSON = jsx:decode(BJSONData),
+	#{<<"message">> := Message} = JSON,
+	#{<<"tweet">> := Tweet} = Message,
+	#{<<"user">> := User} = Tweet,
+	#{<<"screen_name">> := ScreenName} = User,
+
+	io:format("[~p] worker is processed data with `Screen Name`=`~s`.~n", [self(), ScreenName]),
+
 	timer:sleep(10),
-	{noreply, NewState};
+	{noreply, State};
 handle_cast(_Request, State = #worker_state{}) ->
 	{noreply, State}.
 
