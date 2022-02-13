@@ -28,6 +28,10 @@ handle_call(_Request, _From, State = #worker_state{}) ->
 	{reply, ok, State}.
 
 handle_cast({tweet, JSONData}, State = #worker_state{}) ->
+	MilliSeconds = rand:uniform(450) + 50,
+
+	timer:sleep(MilliSeconds),
+
 	BJSONData = list_to_binary(JSONData),
 
 	JSON = jsx:decode(BJSONData),
@@ -37,8 +41,6 @@ handle_cast({tweet, JSONData}, State = #worker_state{}) ->
 	#{<<"screen_name">> := ScreenName} = User,
 
 	io:format("[~p] worker is processed data with `Screen Name`=`~s`.~n", [self(), ScreenName]),
-
-	timer:sleep(10),
 	{noreply, State};
 handle_cast(_Request, State = #worker_state{}) ->
 	{noreply, State}.
