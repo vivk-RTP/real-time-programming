@@ -34,13 +34,7 @@ handle_cast({tweet, JSONData}, State = #worker_state{}) ->
 
 	BJSONData = list_to_binary(JSONData),
 
-	JSON = jsx:decode(BJSONData),
-	#{<<"message">> := Message} = JSON,
-	#{<<"tweet">> := Tweet} = Message,
-	#{<<"user">> := User} = Tweet,
-	#{<<"screen_name">> := ScreenName} = User,
-
-	io:format("[~p] worker is processed data with `Screen Name`=`~s`.~n", [self(), ScreenName]),
+	process_tweet(BJSONData),
 	{noreply, State};
 handle_cast(_Request, State = #worker_state{}) ->
 	{noreply, State}.
@@ -65,3 +59,12 @@ get_specs() ->
 %%%===================================================================
 %%% Internal functions
 %%%===================================================================
+
+process_tweet(BTweet) ->
+	JSON = jsx:decode(BTweet),
+	#{<<"message">> := Message} = JSON,
+	#{<<"tweet">> := Tweet} = Message,
+	#{<<"user">> := User} = Tweet,
+	#{<<"screen_name">> := ScreenName} = User,
+
+	io:format("[~p] worker is processed data with `Screen Name`=`~s`.~n", [self(), ScreenName]).
