@@ -1,7 +1,9 @@
 %%%-------------------------------------------------------------------
 %%% @author Volcov Oleg
 %%% @copyright (C) 2022, FAF-191
-%%% @doc Simple `worker` which will do some `Tweet` processing.
+%%% @doc Actor to receive json data from ‘Worker Manager’,
+%%%         serialize it, sleep for a half of a second
+%%%         to imitate some processing and print data in output.
 %%% @end
 %%%-------------------------------------------------------------------
 -module(worker).
