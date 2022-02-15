@@ -33,8 +33,9 @@ handle_cast({tweet, JSONData}, State = #worker_state{}) ->
 	timer:sleep(MilliSeconds),
 
 	BJSONData = list_to_binary(JSONData),
+	IsJSON = jsx:is_json(BJSONData),
 
-	process_tweet(BJSONData),
+	process_tweet(BJSONData, IsJSON),
 	{noreply, State};
 handle_cast(_Request, State = #worker_state{}) ->
 	{noreply, State}.
@@ -60,7 +61,12 @@ get_specs() ->
 %%% Internal functions
 %%%===================================================================
 
-process_tweet(BTweet) ->
+process_tweet(BTweet, IsJSON) when IsJSON =:= false ->
+	Tweet = unicode:characters_to_list(BTweet, utf8),
+	IsPanic = string:find(Tweet, "panic") =/= nomatch,
+	process_error(IsPanic),
+	exit(normal);
+process_tweet(BTweet, IsJSON) when IsJSON =:= true ->
 	JSON = jsx:decode(BTweet),
 	#{<<"message">> := Message} = JSON,
 	#{<<"tweet">> := Tweet} = Message,
@@ -68,3 +74,11 @@ process_tweet(BTweet) ->
 	#{<<"screen_name">> := ScreenName} = User,
 
 	io:format("[~p] worker is processed data with `Screen Name`=`~s`.~n", [self(), ScreenName]).
+
+process_error(IsPanic) when IsPanic =:= true ->
+	error_logger:error_msg(create_error_message("Panic!"));
+process_error(IsPanic) when IsPanic =:= false ->
+	error_logger:error_msg(create_error_message("Wrong formatting!")).
+
+create_error_message(Error) ->
+	io_lib:format("[~p] worker is stopped with `Error`=`~s`.~n", [self(), Error]).
