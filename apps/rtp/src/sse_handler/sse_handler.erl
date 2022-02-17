@@ -1,7 +1,8 @@
 %%%-------------------------------------------------------------------
 %%% @author Volcov Oleg
 %%% @copyright (C) 2022, FAF-191
-%%% @doc
+%%% @doc Actor to establish a SEE connection, listen to all events
+%%%         and send json data to ‘Worker Manager’.
 %%% @end
 %%%-------------------------------------------------------------------
 
@@ -33,6 +34,8 @@ init(Url) ->
 	sse_connection:new(Url, self),
 	{ok, []}.
 
+handle_call({stop, Reason}, _From, State) ->
+	{stop, Reason, shutdown_ok, State};
 handle_call(_Request, _From, State) ->
 	{reply, ok, State}.
 
@@ -45,11 +48,13 @@ handle_info({http, {_RequestId, stream_start, _Headers}}, State) ->
 handle_info({http, {_RequestId, {error, _Reason}}}, State) ->
 	Error = io_lib:format("[~p] sse_handler's `error` with `reason`=`~p`.~n", [self(), _Reason]),
 	error_logger:error_msg(Error),
-	{stop, _Reason, State};
+	gen_server:call(self(), {stop, _Reason}),
+	{noreply, State};
 handle_info({http, {_RequestId, stream_end, _Headers}}, State) ->
 	Error = io_lib:format("[~p] sse_handler's `stream end` with `headers`=~p.~n", [self(), _Headers]),
 	error_logger:error_msg(Error),
-	{stop, normal, State};
+	gen_server:call(self(), {stop, normal}),
+	{noreply, State};
 handle_info({http, {_RequestId, stream, Message}}, State) ->
 	NewState = tweets:process(Message, State),
 	{noreply, NewState};
@@ -65,7 +70,7 @@ get_specs(Id, Url) ->
 	#{
 		id => integer_to_list(Id)++"_sse_handler",
 		start => {sse_handler, start_link, [Url]},
-		restart => transient,
+		restart => permanent,
 		shutdown => infinity,
 		type => worker,
 		modules => [sse_handler]
