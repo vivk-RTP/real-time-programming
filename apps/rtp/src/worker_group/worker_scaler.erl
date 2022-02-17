@@ -1,13 +1,9 @@
 %%%-------------------------------------------------------------------
 %%% @author Volcov Oleg
 %%% @copyright (C) 2022, FAF-191
-%%% @doc Calculate average count of needed workers and set it.
-%%%
-%%%      Count the number of messages to provide
-%%%         by @inc async endpoint.
-%%%      Every @INTERVAL of milliseconds count average
-%%%         amount of messages and decide how many
-%%%         workers is needed.
+%%% @doc Actor to start new ‘Workers’ by ‘Worker Supervisor’
+%%%         or stop useless. Actor will count messages in a time
+%%%         interval and decide how many ‘Workers’ are enough.
 %%% @end
 %%%-------------------------------------------------------------------
 
