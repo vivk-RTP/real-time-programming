@@ -1,7 +1,8 @@
 %%%-------------------------------------------------------------------
 %%% @author Volcov Oleg
 %%% @copyright (C) 2022, FAF-191
-%%% @doc
+%%% @doc Actor to establish a SEE connection, listen to all events
+%%%         and send json data to ‘Worker Manager’.
 %%% @end
 %%%-------------------------------------------------------------------
 
