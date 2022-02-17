@@ -12,6 +12,8 @@
 -export([start_link/0, init/1]).
 -export([get_specs/0, start_worker/1, stop_worker/1]).
 
+-define(MINIMAL_WORKERS, 10).
+
 start_link() ->
     supervisor:start_link({local, ?MODULE}, ?MODULE, []).
 
@@ -46,19 +48,19 @@ get_specs() ->
         modules => [worker_sup]
     }.
 
-start_worker(Count) when Count > 0 ->
+start_worker(Count) when Count > ?MINIMAL_WORKERS ->
     {ok, _Pid} = supervisor:start_child(?MODULE, []),
     start_worker(Count-1);
-start_worker(Count) when Count =< 0 ->
+start_worker(Count) when Count =< ?MINIMAL_WORKERS ->
     ok.
 
-stop_worker(Count) when Count > 0 ->
+stop_worker(Count) when Count > ?MINIMAL_WORKERS ->
     WorkerPIDs = supervisor:which_children(?MODULE),
     stop_worker(WorkerPIDs, Count);
-stop_worker(Count) when Count =< 0 ->
+stop_worker(Count) when Count =< ?MINIMAL_WORKERS ->
     ok.
 
-stop_worker(_WorkerPIDs, Count) when Count =:= 0 ->
+stop_worker(_WorkerPIDs, Count) when Count =:= ?MINIMAL_WORKERS ->
     ok;
 stop_worker([] = _WorkerPIDs, _Count) ->
     ok;
