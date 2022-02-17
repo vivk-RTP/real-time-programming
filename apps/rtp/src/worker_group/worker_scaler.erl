@@ -61,7 +61,8 @@ handle_info(trigger, State = #worker_scaler_state{}) ->
 	set_workers(Diff),
 
 	NewState = State#worker_scaler_state{current = 0},
-	io:format("[~p] worker_scaler's `re-scale` with Diff=~p and NewState=~p is called.~n", [self(), Diff, NewState]),
+	io:format("~n[~p] worker_scaler's `re-scale` with `Current`=~p and `Diff`=~p is called.~n~n",
+		[self(), Current, Diff]),
 
 	erlang:send_after(?INTERVAL, self(), trigger),
 	{noreply, NewState};
