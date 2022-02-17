@@ -1,7 +1,7 @@
 %%%-------------------------------------------------------------------
 %%% @author Volcov Oleg
 %%% @copyright (C) 2022, FAF-191
-%%% @doc Supervisor for starting new and stopping useless `workers`.
+%%% @doc Actor to dynamically balance the amount of ‘Workers’.
 %%% @end
 %%%-------------------------------------------------------------------
 
