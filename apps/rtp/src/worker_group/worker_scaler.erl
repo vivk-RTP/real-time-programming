@@ -23,7 +23,7 @@
 -define(WORKER_SUP, worker_sup).
 -define(INTERVAL, 1000).
 
--define(START_WORKER_COUNT, 100).
+-define(START_WORKER_COUNT, 2000).
 
 -record(worker_scaler_state, {current, prev_average}).
 
@@ -56,11 +56,11 @@ handle_cast(_Request, State = #worker_scaler_state{}) ->
 
 handle_info(trigger, State = #worker_scaler_state{}) ->
 	{worker_scaler_state, Current, PrevAverage} = State,
-	{Average, Diff} = calculate_difference(Current, PrevAverage),
+	Diff = calculate_difference(Current),
 
 	set_workers(Diff),
 
-	NewState = State#worker_scaler_state{current = 0, prev_average = Average},
+	NewState = State#worker_scaler_state{current = 0, prev_average = 0},
 	io:format("[~p] worker_scaler's `re-scale` with Diff=~p and NewState=~p is called.~n", [self(), Diff, NewState]),
 
 	erlang:send_after(?INTERVAL, self(), trigger),
@@ -91,13 +91,11 @@ calculate_average(PrevAverage, NewAverage) when PrevAverage =:= 0 ->
 calculate_average(PrevAverage, NewAverage) ->
 	PrevAverage - (PrevAverage / ?COUNT_OF_ITERATIONS) + (NewAverage / ?COUNT_OF_ITERATIONS).
 
-calculate_difference(Current, PrevAverage) ->
-	Average = calculate_average(PrevAverage, Current),
-
+calculate_difference(Current) ->
 	WorkerPIDs = supervisor:which_children(?WORKER_SUP),
 	WorkersCount = length(WorkerPIDs),
 
-	{Average, round(Average) div 10 - WorkersCount}.
+	Current div 2 - WorkersCount.
 
 set_workers(Diff) when Diff >= 0 ->
 	worker_sup:start_worker(Diff);
