@@ -1,7 +1,9 @@
 %%%-------------------------------------------------------------------
 %%% @author Volcov Oleg
 %%% @copyright (C) 2022, FAF-191
-%%% @doc Simple `worker` which will do some `Tweet` processing.
+%%% @doc Actor to receive json data from ‘Worker Manager’,
+%%%         serialize it, sleep for a half of a second
+%%%         to imitate some processing and print data in output.
 %%% @end
 %%%-------------------------------------------------------------------
 -module(worker).
@@ -27,12 +29,16 @@ init([]) ->
 handle_call(_Request, _From, State = #worker_state{}) ->
 	{reply, ok, State}.
 
-handle_cast({tweet, Tweet}, State = #worker_state{}) ->
-	io:format("~n[WIP][~p] Tweet:~n~s~n", [self(), Tweet]),
-	%% TODO: Worker behaviour implementation
-	NewState = State#worker_state{last_tweet = Tweet},
-	timer:sleep(10),
-	{noreply, NewState};
+handle_cast({tweet, JSONData}, State = #worker_state{}) ->
+	MilliSeconds = rand:uniform(450) + 50,
+
+	timer:sleep(MilliSeconds),
+
+	BJSONData = list_to_binary(JSONData),
+	IsJSON = jsx:is_json(BJSONData),
+
+	process_tweet(BJSONData, IsJSON),
+	{noreply, State};
 handle_cast(_Request, State = #worker_state{}) ->
 	{noreply, State}.
 
@@ -56,3 +62,25 @@ get_specs() ->
 %%%===================================================================
 %%% Internal functions
 %%%===================================================================
+
+process_tweet(BTweet, IsJSON) when IsJSON =:= false ->
+	Tweet = unicode:characters_to_list(BTweet, utf8),
+	IsPanic = string:find(Tweet, "panic") =/= nomatch,
+	process_error(IsPanic),
+	exit(normal);
+process_tweet(BTweet, IsJSON) when IsJSON =:= true ->
+	JSON = jsx:decode(BTweet),
+	#{<<"message">> := Message} = JSON,
+	#{<<"tweet">> := Tweet} = Message,
+	#{<<"user">> := User} = Tweet,
+	#{<<"screen_name">> := ScreenName} = User,
+
+	io:format("[~p] worker is processed data with `Screen Name`=`~s`.~n", [self(), ScreenName]).
+
+process_error(IsPanic) when IsPanic =:= true ->
+	error_logger:error_msg(create_error_message("Panic!"));
+process_error(IsPanic) when IsPanic =:= false ->
+	error_logger:error_msg(create_error_message("Wrong formatting!")).
+
+create_error_message(Error) ->
+	io_lib:format("[~p] worker is stopped with `Error`=`~s`.~n", [self(), Error]).
