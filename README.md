@@ -46,7 +46,7 @@
 
 #### Path:
 ```
-/docs/docs/real-time-programming-doc.pdf
+/docs/rtp-doc-lab1-v2.pdf
 ```
 #### or by link:
-[Click for PDF file](docs/real-time-programming-doc.pdf)
+[Click for PDF file](docs/rtp-doc-lab1-v2.pdf)
