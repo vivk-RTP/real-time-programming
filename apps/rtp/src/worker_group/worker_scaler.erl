@@ -1,13 +1,9 @@
 %%%-------------------------------------------------------------------
 %%% @author Volcov Oleg
 %%% @copyright (C) 2022, FAF-191
-%%% @doc Calculate average count of needed workers and set it.
-%%%
-%%%      Count the number of messages to provide
-%%%         by @inc async endpoint.
-%%%      Every @INTERVAL of milliseconds count average
-%%%         amount of messages and decide how many
-%%%         workers is needed.
+%%% @doc Actor to start new ‘Workers’ by ‘Worker Supervisor’
+%%%         or stop useless. Actor will count messages in a time
+%%%         interval and decide how many ‘Workers’ are enough.
 %%% @end
 %%%-------------------------------------------------------------------
 
@@ -23,9 +19,9 @@
 -define(WORKER_SUP, worker_sup).
 -define(INTERVAL, 1000).
 
--define(START_WORKER_COUNT, 100).
+-define(START_WORKER_COUNT, 2000).
 
--record(worker_scaler_state, {current, prev_average}).
+-record(worker_scaler_state, {current}).
 
 %%%===================================================================
 %%% Spawning and gen_server implementation
@@ -37,7 +33,7 @@ start_link() ->
 init([]) ->
 	io:format("[~p] worker_scaler's `init` with is called.~n", [self()]),
 
-	NewState = #worker_scaler_state{current = 0, prev_average = 0},
+	NewState = #worker_scaler_state{current = 0},
 
 	set_workers(?START_WORKER_COUNT),
 
@@ -48,20 +44,21 @@ handle_call(_Request, _From, State = #worker_scaler_state{}) ->
 	{reply, ok, State}.
 
 handle_cast({inc}, State = #worker_scaler_state{}) ->
-	{worker_scaler_state, Current, _} = State,
+	{worker_scaler_state, Current} = State,
 	NewState = State#worker_scaler_state{current = Current+1},
 	{noreply, NewState};
 handle_cast(_Request, State = #worker_scaler_state{}) ->
 	{noreply, State}.
 
 handle_info(trigger, State = #worker_scaler_state{}) ->
-	{worker_scaler_state, Current, PrevAverage} = State,
-	{Average, Diff} = calculate_difference(Current, PrevAverage),
+	{worker_scaler_state, Current} = State,
+	Diff = calculate_difference(Current),
 
 	set_workers(Diff),
 
-	NewState = State#worker_scaler_state{current = 0, prev_average = Average},
-	io:format("[~p] worker_scaler's `re-scale` with Diff=~p and NewState=~p is called.~n", [self(), Diff, NewState]),
+	NewState = State#worker_scaler_state{current = 0},
+	io:format("~n[~p] worker_scaler's `re-scale` with `Current`=~p and `Diff`=~p is called.~n~n",
+		[self(), Current, Diff]),
 
 	erlang:send_after(?INTERVAL, self(), trigger),
 	{noreply, NewState};
@@ -86,18 +83,11 @@ get_specs() ->
 %%% Internal functions
 %%%===================================================================
 
-calculate_average(PrevAverage, NewAverage) when PrevAverage =:= 0 ->
-	NewAverage;
-calculate_average(PrevAverage, NewAverage) ->
-	PrevAverage - (PrevAverage / ?COUNT_OF_ITERATIONS) + (NewAverage / ?COUNT_OF_ITERATIONS).
-
-calculate_difference(Current, PrevAverage) ->
-	Average = calculate_average(PrevAverage, Current),
-
+calculate_difference(Current) ->
 	WorkerPIDs = supervisor:which_children(?WORKER_SUP),
 	WorkersCount = length(WorkerPIDs),
 
-	{Average, round(Average) div 10 - WorkersCount}.
+	Current div 2 - WorkersCount.
 
 set_workers(Diff) when Diff >= 0 ->
 	worker_sup:start_worker(Diff);
