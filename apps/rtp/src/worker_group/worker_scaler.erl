@@ -25,7 +25,7 @@
 
 -define(START_WORKER_COUNT, 2000).
 
--record(worker_scaler_state, {current, prev_average}).
+-record(worker_scaler_state, {current}).
 
 %%%===================================================================
 %%% Spawning and gen_server implementation
@@ -37,7 +37,7 @@ start_link() ->
 init([]) ->
 	io:format("[~p] worker_scaler's `init` with is called.~n", [self()]),
 
-	NewState = #worker_scaler_state{current = 0, prev_average = 0},
+	NewState = #worker_scaler_state{current = 0},
 
 	set_workers(?START_WORKER_COUNT),
 
@@ -48,19 +48,19 @@ handle_call(_Request, _From, State = #worker_scaler_state{}) ->
 	{reply, ok, State}.
 
 handle_cast({inc}, State = #worker_scaler_state{}) ->
-	{worker_scaler_state, Current, _} = State,
+	{worker_scaler_state, Current} = State,
 	NewState = State#worker_scaler_state{current = Current+1},
 	{noreply, NewState};
 handle_cast(_Request, State = #worker_scaler_state{}) ->
 	{noreply, State}.
 
 handle_info(trigger, State = #worker_scaler_state{}) ->
-	{worker_scaler_state, Current, PrevAverage} = State,
+	{worker_scaler_state, Current} = State,
 	Diff = calculate_difference(Current),
 
 	set_workers(Diff),
 
-	NewState = State#worker_scaler_state{current = 0, prev_average = 0},
+	NewState = State#worker_scaler_state{current = 0},
 	io:format("[~p] worker_scaler's `re-scale` with Diff=~p and NewState=~p is called.~n", [self(), Diff, NewState]),
 
 	erlang:send_after(?INTERVAL, self(), trigger),
@@ -85,11 +85,6 @@ get_specs() ->
 %%%===================================================================
 %%% Internal functions
 %%%===================================================================
-
-calculate_average(PrevAverage, NewAverage) when PrevAverage =:= 0 ->
-	NewAverage;
-calculate_average(PrevAverage, NewAverage) ->
-	PrevAverage - (PrevAverage / ?COUNT_OF_ITERATIONS) + (NewAverage / ?COUNT_OF_ITERATIONS).
 
 calculate_difference(Current) ->
 	WorkerPIDs = supervisor:which_children(?WORKER_SUP),
