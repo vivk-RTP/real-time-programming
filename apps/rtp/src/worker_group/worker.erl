@@ -14,7 +14,7 @@
 -export([init/1, handle_call/3, handle_cast/2, handle_info/2]).
 -export([get_specs/0]).
 
--record(worker_state, {last_tweet}).
+-record(worker_state, {amount}).
 
 %%%===================================================================
 %%% Spawning and gen_server implementation
