@@ -26,9 +26,23 @@ start_link() ->
 init([]) ->
 	{ok, #worker_state{}}.
 
+handle_call({get_amount}, _From, State = #worker_state{}) ->
+	%% TODO: return amount of messages in `mailbox`
+	{reply, ok, State};
 handle_call(_Request, _From, State = #worker_state{}) ->
 	{reply, ok, State}.
 
+handle_cast({add_tweet, _JSONData}, State = #worker_state{}) ->
+	%%  TODO: Add tweet entry point
+%%	gen_server:cast(self, {inc}),
+%%	gen_server:cast(self, {tweet, JSONData}),
+	{noreply, State};
+handle_cast({inc}, State = #worker_state{}) ->
+	%%  TODO: Increment amount of tweets
+	{noreply, State};
+handle_cast({dec}, State = #worker_state{}) ->
+	%% TODO: Decrement amount of tweets
+	{noreply, State};
 handle_cast({tweet, JSONData}, State = #worker_state{}) ->
 	MilliSeconds = rand:uniform(450) + 50,
 
@@ -38,6 +52,7 @@ handle_cast({tweet, JSONData}, State = #worker_state{}) ->
 	IsJSON = jsx:is_json(BJSONData),
 
 	process_tweet(BJSONData, IsJSON),
+%%	gen_server:cast(self, {dec}),
 	{noreply, State};
 handle_cast(_Request, State = #worker_state{}) ->
 	{noreply, State}.
