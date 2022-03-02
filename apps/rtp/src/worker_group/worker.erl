@@ -24,25 +24,24 @@ start_link() ->
 	gen_server:start_link(?MODULE, [], []).
 
 init([]) ->
-	{ok, #worker_state{}}.
+	NewState = #worker_state{amount = 0},
+	{ok, NewState}.
 
-handle_call({get_amount}, _From, State = #worker_state{}) ->
-	%% TODO: return amount of messages in `mailbox`
-	{reply, ok, State};
+handle_call({get_amount}, _From, State = #worker_state{amount = Amount}) ->
+	{reply, {amount,  Amount}, State};
 handle_call(_Request, _From, State = #worker_state{}) ->
 	{reply, ok, State}.
 
-handle_cast({add_tweet, _JSONData}, State = #worker_state{}) ->
-	%%  TODO: Add tweet entry point
-%%	gen_server:cast(self, {inc}),
-%%	gen_server:cast(self, {tweet, JSONData}),
+handle_cast({add_tweet, JSONData}, State = #worker_state{}) ->
+	gen_server:cast(self(), {inc}),
+	gen_server:cast(self(), {tweet, JSONData}),
 	{noreply, State};
-handle_cast({inc}, State = #worker_state{}) ->
-	%%  TODO: Increment amount of tweets
-	{noreply, State};
-handle_cast({dec}, State = #worker_state{}) ->
-	%% TODO: Decrement amount of tweets
-	{noreply, State};
+handle_cast({inc}, _State = #worker_state{amount = Amount}) ->
+	NewState = #worker_state{amount = Amount+1},
+	{noreply, NewState};
+handle_cast({dec}, _State = #worker_state{amount = Amount}) ->
+	NewState = #worker_state{amount = Amount-1},
+	{noreply, NewState};
 handle_cast({tweet, JSONData}, State = #worker_state{}) ->
 	MilliSeconds = rand:uniform(450) + 50,
 
@@ -52,7 +51,7 @@ handle_cast({tweet, JSONData}, State = #worker_state{}) ->
 	IsJSON = jsx:is_json(BJSONData),
 
 	process_tweet(BJSONData, IsJSON),
-%%	gen_server:cast(self, {dec}),
+	gen_server:cast(self(), {dec}),
 	{noreply, State};
 handle_cast(_Request, State = #worker_state{}) ->
 	{noreply, State}.
