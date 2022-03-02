@@ -36,15 +36,16 @@ handle_call(_Request, _From, State) ->
 handle_cast({tweet, Tweet}, State) ->
 	gen_server:cast(?WORKER_SCALER, {inc}),
 	WorkerPIDs = supervisor:which_children(?WORKER_SUP),
-	WorkerCount = length(WorkerPIDs),
+%%	WorkerCount = length(WorkerPIDs),
 
-	NewIndex = round_robin_distribution(State, WorkerCount),
+%%	NewIndex = round_robin_distribution(State, WorkerCount),
+%%
+%%	NthResult = lists:nth(NewIndex, WorkerPIDs),
+%%	{_, WorkerPID, _, _} = NthResult,
+	WorkerPID  = least_connected_balancing(WorkerPIDs),
 
-	NthResult = lists:nth(NewIndex, WorkerPIDs),
-	{_, WorkerPID, _, _} = NthResult,
-
-	gen_server:cast(WorkerPID, {tweet, Tweet}),
-	{noreply, NewIndex};
+	gen_server:cast(WorkerPID, {add_tweet, Tweet}),
+	{noreply, 0};
 handle_cast(_Request, State) ->
 	{noreply, State}.
 
@@ -73,3 +74,24 @@ round_robin_distribution(_Index, _Length) when _Index < _Length ->
 	_Index + 1;
 round_robin_distribution(_Index, _Length) ->
 	1.
+
+least_connected_balancing([], _Min, MinPID) ->
+	MinPID;
+least_connected_balancing([Head|Tail], Min, MinPID) ->
+	{_, WorkerPID, _, _} = Head,
+	{amount, Amount} = gen_server:call(WorkerPID, {get_amount}),
+	{Min, MinPID} = calculate_min(Min, MinPID, Amount, WorkerPID),
+	least_connected_balancing(Tail, Min, MinPID).
+
+least_connected_balancing(WorkerPIDs) ->
+	[Head|Tail] = WorkerPIDs,
+	{_, WorkerPID, _, _} = Head,
+	{amount, Amount} = gen_server:call(WorkerPID, {get_amount}),
+	least_connected_balancing(Tail, Amount, WorkerPID).
+
+calculate_min(Min, _MinPID, Current, _CurrentPID) when Min =:= -1 ->
+	{Current, _CurrentPID};
+calculate_min(Min, _MinPID, Current, _CurrentPID) when Min > Current ->
+	{Current, _CurrentPID};
+calculate_min(Min, _MinPID, Current, _CurrentPID) when Min =< Current ->
+	{Min, _MinPID}.
