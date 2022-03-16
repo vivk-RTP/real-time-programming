@@ -34,8 +34,10 @@ init([]) ->
     WorkerSup = worker_sup:get_specs(),
     WorkerManager = worker_manager:get_specs(),
     WorkerScaler = worker_scaler:get_specs(),
+    HashTagAnalyzer = hashtag_analyzer:get_specs(),
 
     ChildSpecs = [
+        HashTagAnalyzer,
         WorkerSup,
         WorkerManager,
         WorkerScaler,
