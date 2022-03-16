@@ -14,6 +14,8 @@
 -export([init/1, handle_call/3, handle_cast/2, handle_info/2]).
 -export([get_specs/0]).
 
+-define(HASHTAG_ANALYZER, hashtag_analyzer).
+
 -record(worker_state, {last_tweet}).
 
 %%%===================================================================
@@ -74,6 +76,11 @@ process_tweet(BTweet, IsJSON) when IsJSON =:= true ->
 	#{<<"tweet">> := Tweet} = Message,
 	#{<<"user">> := User} = Tweet,
 	#{<<"screen_name">> := ScreenName} = User,
+
+	#{<<"entities">> := Entities} = Tweet,
+	#{<<"hashtags">> := HashTags} = Entities,
+
+	gen_server:cast(?HASHTAG_ANALYZER, {put, HashTags}),
 
 	io:format("[~p] worker is processed data with `Screen Name`=`~s`.~n", [self(), ScreenName]).
 
