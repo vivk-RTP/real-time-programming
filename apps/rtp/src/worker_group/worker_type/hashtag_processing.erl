@@ -1,15 +1,14 @@
 %%%-------------------------------------------------------------------
-%%% @author Volcov Oleg
+%%% @author Voclov Oleg
 %%% @copyright (C) 2022, FAF-191
 %%% @doc
 %%% @end
 %%%-------------------------------------------------------------------
-
--module(retweet_analyzer).
+-module(hashtag_processing).
 
 -export([work_handler/0]).
 
--define(WORKER_MANAGER, worker_manager).
+-define(HASHTAG_ANALYZER, hashtag_analyzer).
 
 %%%===================================================================
 %%% External functions
@@ -23,5 +22,8 @@ work_handler() ->
 %%%===================================================================
 
 work(Tweet) ->
-	#{<<"retweeted_status">> := Retweet} = Tweet,
-	gen_server:cast(?WORKER_MANAGER, {tweet, Retweet}).
+	#{<<"entities">> := Entities} = Tweet,
+	#{<<"hashtags">> := HashTags} = Entities,
+
+	gen_server:cast(?HASHTAG_ANALYZER, {put, HashTags}).
+
