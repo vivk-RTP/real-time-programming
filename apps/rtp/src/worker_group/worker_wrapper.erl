@@ -26,11 +26,13 @@ init([]) ->
 	RetweetWorker = worker:get_specs("retweet", retweet_processing:work_handler()),
 	HashTagWorker = worker:get_specs("hash_tag", hashtag_processing:work_handler()),
 	NameWorker = worker:get_specs("name", name_processing:work_handler()),
+	EngageRationWorker = worker:get_specs("engage_ration", engagement_ratio_processing:work_handler()),
 
 	Children = [
 		RetweetWorker,
 		HashTagWorker,
-		NameWorker
+		NameWorker,
+		EngageRationWorker
 	],
 
 	{ok, {SupFlags, Children}}.
