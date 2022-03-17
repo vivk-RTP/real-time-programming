@@ -43,7 +43,7 @@ handle_cast({tweet, Tweet}, State) ->
 	NthResult = lists:nth(NewIndex, WorkerPIDs),
 	{_, WorkerPID, _, _} = NthResult,
 
-	gen_server:cast(WorkerPID, {tweet, Tweet}),
+	worker_wrapper:send_message(WorkerPID, Tweet),
 	{noreply, NewIndex};
 handle_cast(_Request, State) ->
 	{noreply, State}.
