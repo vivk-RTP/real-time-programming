@@ -39,6 +39,16 @@ init([]) ->
 %%% External functions
 %%%===================================================================
 
+get_specs() ->
+	#{
+		id => worker_wrapper,
+		start => {worker_wrapper, start_link, []},
+		restart => permanent,
+		shutdown => infinity,
+		type => supervisor,
+		modules => [worker_wrapper]
+	}.
+
 send_message(SelfPID, Message) ->
 	Children = supervisor:which_children(SelfPID),
 	send_to_children(Children, Message).
