@@ -26,7 +26,7 @@ init([]) ->
         period => MaxSecondsBetweenRestarts
     },
 
-    Worker = worker:get_specs(),
+    Worker = worker_wrapper:get_specs(),
 
     Children = [
         Worker
