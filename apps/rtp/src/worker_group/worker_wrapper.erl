@@ -9,24 +9,28 @@
 -behaviour(supervisor).
 
 -export([start_link/0, init/1]).
--export([send_message/2]).
+-export([send_message/2, get_specs/0]).
 
 start_link() ->
-	supervisor:start_link({local, ?MODULE}, ?MODULE, []).
+	supervisor:start_link(?MODULE, []).
 
 init([]) ->
-	MaxRestarts = 100,
+	MaxRestarts = 0,
 	MaxSecondsBetweenRestarts = 10,
 	SupFlags = #{
-		strategy => all_for_one,
+		strategy => one_for_all,
 		intensity => MaxRestarts,
 		period => MaxSecondsBetweenRestarts
 	},
 
-%%	Worker = worker:get_specs(),
+	RetweetWorker = worker:get_specs("retweet", retweet_processing:work_handler()),
+	HashTagWorker = worker:get_specs("hash_tag", hashtag_processing:work_handler()),
+	NameWorker = worker:get_specs("name", name_processing:work_handler()),
 
 	Children = [
-%%		Worker
+		RetweetWorker,
+		HashTagWorker,
+		NameWorker
 	],
 
 	{ok, {SupFlags, Children}}.
