@@ -12,9 +12,7 @@
 
 -export([start_link/1]).
 -export([init/1, handle_call/3, handle_cast/2, handle_info/2]).
--export([get_specs/1]).
-
--define(HASHTAG_ANALYZER, hashtag_analyzer).
+-export([get_specs/2]).
 
 -record(worker_state, {work_func, last_tweet}).
 
@@ -32,12 +30,12 @@ init(WorkFunc) ->
 handle_call(_Request, _From, State = #worker_state{}) ->
 	{reply, ok, State}.
 
-handle_cast({tweet, JSONData}, State = #worker_state{work_func = WorkFunc}) ->
+handle_cast({tweet, LTweet}, State = #worker_state{work_func = WorkFunc}) ->
 	MilliSeconds = rand:uniform(450) + 50,
 
 	timer:sleep(MilliSeconds),
 
-	Tweet = is_process_ready(JSONData),
+	Tweet = get_tweet_map(LTweet),
 	WorkFunc(Tweet),
 
 	{noreply, State};
@@ -51,9 +49,9 @@ handle_info(_Info, State = #worker_state{}) ->
 %%% External functions
 %%%===================================================================
 
-get_specs(WorkFunc) ->
+get_specs(Name, WorkFunc) ->
 	#{
-		id => worker,
+		id => Name++"_worker",
 		start => {worker, start_link, [WorkFunc]},
 		restart => permanent,
 		shutdown => infinity,
@@ -65,36 +63,23 @@ get_specs(WorkFunc) ->
 %%% Internal functions
 %%%===================================================================
 
-is_process_ready(Data) when is_map(Data) =:= true ->
-	process_tweet(Data);
-is_process_ready(Data) when is_map(Data) =:= false ->
-	BJSONData = list_to_binary(Data),
-	IsJSON = jsx:is_json(BJSONData),
+get_tweet_map(Map) when is_map(Map) =:= true ->
+	Map;
+get_tweet_map(LTweet) when is_map(LTweet) =:= false ->
+	BTweet = list_to_binary(LTweet),
+	IsJson = jsx:is_json(BTweet),
 
-	tweet_parsing(BJSONData, IsJSON).
+	tweet_parsing(BTweet, IsJson).
 
-tweet_parsing(BTweet, IsJSON) when IsJSON =:= false ->
+tweet_parsing(BTweet, IsJson) when IsJson =:= false ->
 	Tweet = unicode:characters_to_list(BTweet, utf8),
 	IsPanic = string:find(Tweet, "panic") =/= nomatch,
 	process_error(IsPanic),
 	exit(normal);
-tweet_parsing(BTweet, IsJSON) when IsJSON =:= true ->
-	JSON = jsx:decode(BTweet),
-	#{<<"message">> := Message} = JSON,
+tweet_parsing(BTweet, IsJson) when IsJson =:= true ->
+	Map = jsx:decode(BTweet),
+	#{<<"message">> := Message} = Map,
 	#{<<"tweet">> := Tweet} = Message,
-	process_tweet(Tweet).
-
-process_tweet(Tweet) ->
-	#{<<"user">> := User} = Tweet,
-	#{<<"screen_name">> := ScreenName} = User,
-
-	#{<<"entities">> := Entities} = Tweet,
-	#{<<"hashtags">> := HashTags} = Entities,
-
-	gen_server:cast(?HASHTAG_ANALYZER, {put, HashTags}),
-
-	io:format("[~p] worker is processed data with `Screen Name`=`~s`.~n", [self(), ScreenName]),
-
 	Tweet.
 
 process_error(IsPanic) when IsPanic =:= true ->
