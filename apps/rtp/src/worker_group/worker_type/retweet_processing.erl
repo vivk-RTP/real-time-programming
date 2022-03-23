@@ -31,6 +31,5 @@ send(_, Tweet) ->
 	gen_server:cast(?WORKER_MANAGER, {tweet, Retweet}).
 
 work(Tweet) ->
-%%	#{<<"retweeted">> := Retweeted} = Tweet,
 	Retweeted = is_map_key(<<"retweeted_status">>, Tweet),
 	send(Retweeted, Tweet).
