@@ -21,10 +21,11 @@ work_handler() ->
 
 work(Tweet) ->
 	#{<<"text">> := Text} = Tweet,
+	#{<<"id">> := ID} = Tweet,
 
 	AverageScore = sentimental_score_calculation(Text),
 
-	io:format("[~p] worker is processed data with `Score`=`~p`.~n", [self(), AverageScore]).
+	gen_server:cast(aggregator, {sent_score, ID, AverageScore}).
 
 iterate_score([], Score, Iterator) ->
 	{Score, Iterator};
