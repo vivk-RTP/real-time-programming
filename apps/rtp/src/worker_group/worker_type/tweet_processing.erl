@@ -4,7 +4,7 @@
 %%% @doc
 %%% @end
 %%%-------------------------------------------------------------------
--module(name_processing).
+-module(tweet_processing).
 
 -export([work_handler/0]).
 
@@ -20,9 +20,7 @@ work_handler() ->
 %%%===================================================================
 
 work(Tweet) ->
-	#{<<"user">> := User} = Tweet,
-	#{<<"screen_name">> := ScreenName} = User,
+	#{<<"id">> := ID} = Tweet,
 
-	io:format("[~p] worker is processed data with `Screen Name`=`~s`.~n", [self(), ScreenName]).
-
+	gen_server:cast(aggregator, {tweet, ID, Tweet}).
 
