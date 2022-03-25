@@ -20,6 +20,7 @@ start() ->
 
 start(_StartType, _StartArgs) ->
     io:format("[~p] Tweet-Analyzer's `start` is called.~n", [self()]),
+%%    application:ensure_all_started(mongodb),
     rtp_sup:start_link().
 
 stop() ->
