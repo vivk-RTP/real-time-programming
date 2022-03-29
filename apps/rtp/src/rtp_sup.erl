@@ -37,8 +37,10 @@ init([]) ->
     HashTagAnalyzer = hashtag_analyzer:get_specs(),
     Aggregator = aggregator:get_specs(),
     Sink = sink:get_specs(),
+    MessageBroker = message_broker:get_specs(),
 
     ChildSpecs = [
+        MessageBroker,
         HashTagAnalyzer,
         WorkerSup,
         WorkerManager,
