@@ -18,7 +18,9 @@
 
 -define(BATCH_SIZE, 32).
 
--record(sink_state, {length, list, connection}).
+-define(INTERVAL, 1000).
+
+-record(sink_state, {length, list, connection, timer}).
 
 %%%===================================================================
 %%% Spawning and gen_server implementation
@@ -30,8 +32,10 @@ start_link() ->
 init([]) ->
 	application:ensure_all_started(mongodb),
 	InitState = get_empty_state(),
+	TimerRef = create_timer(),
+	TimerState = InitState#sink_state{timer = TimerRef},
 	ConnectionStatus = mc_worker_api:connect([{database, ?DB_NAME}]),
-	NewState = analyze_connection(ConnectionStatus, InitState),
+	NewState = analyze_connection(ConnectionStatus, TimerState),
 	io:format("[~p] sink's init call with new state = [~p].~n", [self(), NewState]),
 	{ok, NewState}.
 
@@ -45,6 +49,9 @@ handle_cast({put, User, Tweet}, State = #sink_state{}) ->
 handle_cast(_Request, State = #sink_state{}) ->
 	{noreply, State}.
 
+handle_info(trigger, State = #sink_state{}) ->
+	NewState = insert_database(State),
+	{noreply, NewState};
 handle_info(_Info, State = #sink_state{}) ->
 	{noreply, State}.
 
@@ -92,11 +99,15 @@ convert_data([], Users, Tweets) ->
 convert_data([{data, User, Tweet}|Tail], Users, Tweets) ->
 	convert_data(Tail, [User|Users], [Tweet|Tweets]).
 
-insert_database(State = #sink_state{list = List, connection = Connection}) ->
+insert_database(State = #sink_state{length = Length, list = List, connection = Connection}) ->
 	{Users, Tweets} = convert_data(List, [], []),
 	mc_worker_api:insert(Connection, ?USER_COLLECTION, Users),
 	mc_worker_api:insert(Connection, ?TWEET_COLLECTION, Tweets),
-	NewState = get_empty_state(State),
+
+	io:format("~n[~p] sink's database insertion with length = ~p~n~n", [self(), Length]),
+	TimerState = update_timer(State),
+
+	NewState = get_empty_state(TimerState),
 	NewState.
 
 batch_check(State = #sink_state{length = Length}) when Length >= ?BATCH_SIZE ->
@@ -104,5 +115,14 @@ batch_check(State = #sink_state{length = Length}) when Length >= ?BATCH_SIZE ->
 	NewState;
 batch_check(State = #sink_state{}) ->
 	State.
+
+create_timer() ->
+	erlang:send_after(?INTERVAL, self(), trigger).
+
+update_timer(State = #sink_state{timer = TimerRef}) ->
+	_ = erlang:cancel_timer(TimerRef),
+	NewTimerRef = create_timer(),
+	NewState = State#sink_state{timer = NewTimerRef},
+	NewState.
 
 
