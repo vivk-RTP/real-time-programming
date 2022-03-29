@@ -9,7 +9,7 @@
 
 -export([work_handler/0]).
 
--define(WORKER_MANAGER, worker_manager).
+-define(MESSAGE_BROKER, message_broker).
 
 %%%===================================================================
 %%% External functions
@@ -28,7 +28,7 @@ send(Retweeted, _) when Retweeted =:= false ->
 send(_, Tweet) ->
 	#{<<"retweeted_status">> := Retweet} = Tweet,
 	io:format("[~p] Retweeted=true!!!!n", [self()]),
-	gen_server:cast(?WORKER_MANAGER, {tweet, Retweet}).
+	gen_server:cast(?MESSAGE_BROKER, {publish, tweet, Retweet}).
 
 work(Tweet) ->
 	Retweeted = is_map_key(<<"retweeted_status">>, Tweet),
