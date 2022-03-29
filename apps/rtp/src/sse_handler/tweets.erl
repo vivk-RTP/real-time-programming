@@ -11,7 +11,7 @@
 -define(MESSAGE_END, "\n\n").
 -define(EMPTY_LIST, []).
 
--define(WORKER_MANAGER, worker_manager).
+-define(MESSAGE_BROKER, message_broker).
 
 -export([process/2]).
 
@@ -55,4 +55,4 @@ divide_tweets([Head|Tails]) ->
 %%--------------------------------------------------------------------
 
 send_message(Message) ->
-	gen_server:cast(?WORKER_MANAGER, {tweet, Message}).
+	gen_server:cast(?MESSAGE_BROKER, {publish, tweet, Message}).
