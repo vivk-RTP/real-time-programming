@@ -89,8 +89,7 @@ convert_data(_ = #data{tweet = Tweet, engage_ratio = ER, sent_score = SS}) ->
 
 send_data(Data = #data{sent_score = SS, engage_ratio = ER}) ->
 	{User, Tweet} = convert_data(Data),
-	%% TODO: Send full data to sink
-	io:format("[~p] aggregator's full data with User = [~n~p~n] and Tweet = [~n~p~n]~n", [self(), User, Tweet]),
+	gen_server:cast(sink, {put, User, Tweet}),
 	ok.
 
 update_map(true, ID, Data, Map) ->

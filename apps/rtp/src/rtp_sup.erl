@@ -36,6 +36,7 @@ init([]) ->
     WorkerScaler = worker_scaler:get_specs(),
     HashTagAnalyzer = hashtag_analyzer:get_specs(),
     Aggregator = aggregator:get_specs(),
+    Sink = sink:get_specs(),
 
     ChildSpecs = [
         HashTagAnalyzer,
@@ -43,7 +44,8 @@ init([]) ->
         WorkerManager,
         WorkerScaler,
         SSEHandlerSup,
-        Aggregator
+        Aggregator,
+        Sink
     ],
 
     {ok, {SupFlags, ChildSpecs}}.
