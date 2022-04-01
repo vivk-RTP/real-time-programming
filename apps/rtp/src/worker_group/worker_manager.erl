@@ -12,7 +12,7 @@
 
 -behaviour(gen_server).
 
--export([start_link/0]).
+-export([start_link/1]).
 -export([init/1, handle_call/3, handle_cast/2, handle_info/2,
 	terminate/2]).
 -export([get_specs/0]).
@@ -24,11 +24,11 @@
 %%% Spawning and gen_server implementation
 %%%===================================================================
 
-start_link() ->
+start_link(SupPID) ->
 	io:format("[~p] worker_manager's `init` with is called.~n", [self()]),
-	gen_server:start_link({local, ?MODULE}, ?MODULE, [], []).
+	gen_server:start_link(?MODULE, SupPID, []).
 
-init([]) ->
+init(SupPID) ->
 	gen_server:cast(message_broker, {subscribe, tweet, self()}),
 	{ok, 0}.
 
@@ -61,10 +61,10 @@ terminate(_Reason, _State) ->
 %%% External functions
 %%%===================================================================
 
-get_specs() ->
+get_specs(SupPID, ID) ->
 	#{
-		id => worker_manager,
-		start => {worker_manager, start_link, []},
+		id => list_to_atom(ID++"_worker_manager"),
+		start => {worker_manager, start_link, [SupPID]},
 		restart => permanent,
 		shutdown => infinity,
 		type => worker,

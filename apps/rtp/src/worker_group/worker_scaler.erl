@@ -11,9 +11,9 @@
 
 -behaviour(gen_server).
 
--export([start_link/0]).
+-export([start_link/1]).
 -export([init/1, handle_call/3, handle_cast/2, handle_info/2]).
--export([get_specs/0]).
+-export([get_specs/2]).
 
 -define(COUNT_OF_ITERATIONS, 10).
 -define(WORKER_SUP, worker_sup).
@@ -27,10 +27,10 @@
 %%% Spawning and gen_server implementation
 %%%===================================================================
 
-start_link() ->
-	gen_server:start_link({local, ?MODULE}, ?MODULE, [], []).
+start_link(SupPID) ->
+	gen_server:start_link(?MODULE, SupPID, []).
 
-init([]) ->
+init(SupPID) ->
 	io:format("[~p] worker_scaler's `init` with is called.~n", [self()]),
 
 	NewState = #worker_scaler_state{current = 0},
@@ -69,10 +69,10 @@ handle_info(_Info, State = #worker_scaler_state{}) ->
 %%% External functions
 %%%===================================================================
 
-get_specs() ->
+get_specs(SupPID, ID) ->
 	#{
-		id => worker_scaler,
-		start => {worker_scaler, start_link, []},
+		id => list_to_atom(ID++"_worker_scaler"),
+		start => {worker_scaler, start_link, [SupPID]},
 		restart => permanent,
 		shutdown => infinity,
 		type => worker,

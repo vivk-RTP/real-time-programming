@@ -49,9 +49,9 @@ handle_info(_Info, State = #worker_state{}) ->
 %%% External functions
 %%%===================================================================
 
-get_specs(Name, WorkFunc) ->
+get_specs(ID, WorkFunc) ->
 	#{
-		id => Name++"_worker",
+		id => list_to_atom(ID++"_worker"),
 		start => {worker, start_link, [WorkFunc]},
 		restart => permanent,
 		shutdown => infinity,
