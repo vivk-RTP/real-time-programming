@@ -120,9 +120,15 @@ create_timer() ->
 	erlang:send_after(?INTERVAL, self(), trigger).
 
 update_timer(State = #sink_state{timer = TimerRef}) ->
-	_ = erlang:cancel_timer(TimerRef),
+	TimerResult = erlang:cancel_timer(TimerRef),
+	publish_timer_metrics(TimerResult),
 	NewTimerRef = create_timer(),
 	NewState = State#sink_state{timer = NewTimerRef},
 	NewState.
+
+publish_timer_metrics(false) ->
+	gen_server:cast(message_broker, {publish, sink_metrics, ?INTERVAL});
+publish_timer_metrics(TimerResult) ->
+	gen_server:cast(message_broker, {publish, sink_metrics, ?INTERVAL - TimerResult}).
 
 
