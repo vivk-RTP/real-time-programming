@@ -1,5 +1,7 @@
 # RTP Documentation.
 
+#### [Message Broker Documentation Link](docs/MessageBrokerDocumentation.md)
+
 ## Technologies:
 1. <b>Erlang language</b> - I chose this language from the list of available ones <br />[Erlang, Elixir, Scala]:
      1. <b>Erlang vs Scala</b>: wanted to learn a new programming paradigm - functional and as Internet says, it is better suited for working with many parallel tasks.
@@ -69,5 +71,4 @@
 
 ![Message-Exchange-Diagram](docs/imgs/lab2/m-2.jpg)
 ![Message-Exchange-Diagram](docs/imgs/lab2/m-1.jpg)
-
 
