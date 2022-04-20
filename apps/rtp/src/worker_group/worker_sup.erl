@@ -9,16 +9,16 @@
 
 -behaviour(supervisor).
 
--export([start_link/0, init/1]).
--export([get_specs/0, start_worker/1, stop_worker/1]).
+-export([start_link/1, init/1]).
+-export([get_specs/2, start_worker/1, stop_worker/1]).
 
 -define(MINIMAL_WORKERS, 10).
 
-start_link() ->
-    supervisor:start_link({local, ?MODULE}, ?MODULE, []).
+start_link(WorkerSpec) ->
+    supervisor:start_link(?MODULE, WorkerSpec).
 
-init([]) ->
-    MaxRestarts = 100,
+init(WorkerSpec) ->
+    MaxRestarts = 5000,
     MaxSecondsBetweenRestarts = 10,
     SupFlags = #{
         strategy => simple_one_for_one,
@@ -26,10 +26,8 @@ init([]) ->
         period => MaxSecondsBetweenRestarts
     },
 
-    Worker = worker:get_specs(),
-
     Children = [
-        Worker
+        WorkerSpec
     ],
 
     {ok, {SupFlags, Children}}.
@@ -38,36 +36,36 @@ init([]) ->
 %%% External functions
 %%%===================================================================
 
-get_specs() ->
+get_specs(ID, WorkerSpec) ->
     #{
-        id => worker_sup,
-        start => {worker_sup, start_link, []},
+        id => list_to_atom(ID++"_worker_sup"),
+        start => {worker_sup, start_link, [WorkerSpec]},
         restart => permanent,
         shutdown => infinity,
         type => supervisor,
         modules => [worker_sup]
     }.
 
-start_worker(Count) when Count > ?MINIMAL_WORKERS ->
-    {ok, _Pid} = supervisor:start_child(?MODULE, []),
-    start_worker(Count-1);
-start_worker(Count) when Count =< ?MINIMAL_WORKERS ->
+start_worker({SelfPID, Count}) when Count > ?MINIMAL_WORKERS ->
+    {ok, _Pid} = supervisor:start_child(SelfPID, []),
+    start_worker({SelfPID, Count-1});
+start_worker({_SelfPID, Count}) when Count =< ?MINIMAL_WORKERS ->
     ok.
 
-stop_worker(Count) when Count > ?MINIMAL_WORKERS ->
-    WorkerPIDs = supervisor:which_children(?MODULE),
-    stop_worker(WorkerPIDs, Count);
-stop_worker(Count) when Count =< ?MINIMAL_WORKERS ->
+stop_worker({SelfPID, Count}) when Count > ?MINIMAL_WORKERS ->
+    WorkerPIDs = supervisor:which_children(SelfPID),
+    stop_worker(SelfPID, WorkerPIDs, Count);
+stop_worker({_SelfPID, Count}) when Count =< ?MINIMAL_WORKERS ->
     ok.
 
-stop_worker(_WorkerPIDs, Count) when Count =:= ?MINIMAL_WORKERS ->
+stop_worker(_SelfPID, _WorkerPIDs, Count) when Count =:= ?MINIMAL_WORKERS ->
     ok;
-stop_worker([] = _WorkerPIDs, _Count) ->
+stop_worker(_SelfPID, [] = _WorkerPIDs, _Count) ->
     ok;
-stop_worker([Head|Tails] = _WorkerPIDs, Count) ->
+stop_worker(SelfPID, [Head|Tails] = _WorkerPIDs, Count) ->
     {_, PID, _, _} = Head,
-    supervisor:terminate_child(?MODULE, PID),
-    stop_worker(Tails, Count-1).
+    supervisor:terminate_child(SelfPID, PID),
+    stop_worker(SelfPID, Tails, Count-1).
 
 
 %%%===================================================================
