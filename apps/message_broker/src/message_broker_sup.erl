@@ -1,8 +1,9 @@
 %%%-------------------------------------------------------------------
-%% @doc message_broker top level supervisor.
-%% @end
+%%% @author Volcov Oleg
+%%% @copyright (C) 2022, FAF-191
+%%% @doc
+%%% @end
 %%%-------------------------------------------------------------------
-
 -module(message_broker_sup).
 
 -behaviour(supervisor).
@@ -11,25 +12,31 @@
 
 -export([init/1]).
 
--define(SERVER, ?MODULE).
-
 start_link() ->
-    supervisor:start_link({local, ?SERVER}, ?MODULE, []).
+    supervisor:start_link({local, ?MODULE}, ?MODULE, []).
 
-%% sup_flags() = #{strategy => strategy(),         % optional
-%%                 intensity => non_neg_integer(), % optional
-%%                 period => pos_integer()}        % optional
-%% child_spec() = #{id => child_id(),       % mandatory
-%%                  start => mfargs(),      % mandatory
-%%                  restart => restart(),   % optional
-%%                  shutdown => shutdown(), % optional
-%%                  type => worker(),       % optional
-%%                  modules => modules()}   % optional
 init([]) ->
-    SupFlags = #{strategy => one_for_all,
-                 intensity => 0,
-                 period => 1},
-    ChildSpecs = [],
+    io:format("[~p] message_broker_sup superviser's `init` is called.~n", [self()]),
+
+    MaxRestarts = 5000,
+    MaxSecondsBetweenRestarts = 10,
+    SupFlags = #{
+        strategy => one_for_one,
+        intensity => MaxRestarts,
+        period => MaxSecondsBetweenRestarts
+    },
+
+    TCPServerSup = tcp_server_sup:get_specs(),
+
+    ChildSpecs = [
+        TCPServerSup
+    ],
+
     {ok, {SupFlags, ChildSpecs}}.
 
-%% internal functions
+%%%===================================================================
+%%% External functions
+%%%===================================================================
+
+
+

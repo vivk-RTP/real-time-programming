@@ -1,8 +1,9 @@
 %%%-------------------------------------------------------------------
-%% @doc message_broker public API
-%% @end
+%%% @author Volcov Oleg
+%%% @copyright (C) 2022, FAF-191
+%%% @doc
+%%% @end
 %%%-------------------------------------------------------------------
-
 -module(message_broker_app).
 
 -behaviour(application).
@@ -15,4 +16,3 @@ start(_StartType, _StartArgs) ->
 stop(_State) ->
     ok.
 
-%% internal functions
