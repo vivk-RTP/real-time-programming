@@ -46,9 +46,10 @@ handle_cast({send, Message}, State = #tcp_accept_socket_state{socket = Socket}) 
 handle_cast(_Request, State = #tcp_accept_socket_state{}) ->
 	{noreply, State}.
 
-handle_info({tcp, Socket, RawData}, State = #tcp_accept_socket_state{}) ->
-	io:format("[~p] tcp_socket get Message=[~p] from Socket=[~p].~n", [self(), RawData, Socket]),
-	{noreply, State};
+handle_info({tcp, _Socket, RawData}, State = #tcp_accept_socket_state{stash = Stash}) ->
+	NewStash = tcp_message_process_utils:process_tcp_data(RawData, Stash, self()),
+	NewState = State#tcp_accept_socket_state{stash = NewStash},
+	{noreply, NewState};
 handle_info({tcp_closed, Socket}, State = #tcp_accept_socket_state{}) ->
 	io:format("[~p] tcp_socket is closed from Socket=[~p].~n", [self(), Socket]),
 	{stop, normal, State};
