@@ -27,9 +27,11 @@ init([]) ->
     },
 
     TCPServerSup = tcp_server_sup:get_specs(),
+    AttributeSup = attribute_sup:get_specs(),
 
     ChildSpecs = [
-        TCPServerSup
+        TCPServerSup,
+        AttributeSup
     ],
 
     {ok, {SupFlags, ChildSpecs}}.
