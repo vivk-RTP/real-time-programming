@@ -11,9 +11,9 @@
 -export([start_link/1]).
 -export([init/1, handle_call/3, handle_cast/2, handle_info/2,
 	handle_continue/2]).
--export([get_specs/1]).
+-export([get_specs/1, send_data/2]).
 
--record(tcp_accept_socket_state, {socket}).
+-record(tcp_accept_socket_state, {socket, stash}).
 
 %%%===================================================================
 %%% Spawning and gen_server implementation
@@ -23,7 +23,7 @@ start_link(Socket) ->
 	gen_server:start_link(?MODULE, Socket, []).
 
 init(Socket) ->
-	NewState = #tcp_accept_socket_state{socket = Socket},
+	NewState = #tcp_accept_socket_state{socket = Socket, stash = []},
 	io:format("[~p] tcp_socket is started with `Listener` Socket=[~p].~n", [self(), Socket]),
 	{ok, NewState, {continue, after_init}}.
 
@@ -33,14 +33,13 @@ handle_continue(after_init, State = #tcp_accept_socket_state{socket = Socket}) -
 	gen_server:cast(tcp_server_scaler, {accept}),
 	io:format("[~p] tcp_socket is accepted with `Accept` Socket=[~p].~n", [self(), NewSocket]),
 
-	gen_server:cast(self(), {send, " >> Test Accept!\n"}),
-
 	{noreply, NewState}.
 
 handle_call(_Request, _From, State = #tcp_accept_socket_state{}) ->
 	{reply, ok, State}.
 
 handle_cast({send, Message}, State = #tcp_accept_socket_state{socket = Socket}) ->
+	io:format("[~p] tcp_socket send Message to Socket=[~p].~n", [self(), Socket]),
 	gen_tcp:send(Socket, Message),
 	{noreply, State};
 handle_cast(_Request, State = #tcp_accept_socket_state{}) ->
@@ -70,6 +69,9 @@ get_specs(Socket) ->
 		type => worker,
 		modules => [tcp_socket]
 	}.
+
+send_data(PID, Data) ->
+	gen_server:cast(PID, {send, Data}).
 
 %%%===================================================================
 %%% Internal functions
