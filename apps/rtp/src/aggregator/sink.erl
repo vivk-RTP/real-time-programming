@@ -16,7 +16,7 @@
 -define(USER_COLLECTION, <<"Users">>).
 -define(TWEET_COLLECTION, <<"Tweets">>).
 
--define(BATCH_SIZE, 32).
+-define(BATCH_SIZE, 1).
 
 -define(INTERVAL, 1000).
 
@@ -101,8 +101,11 @@ convert_data([{data, User, Tweet}|Tail], Users, Tweets) ->
 
 insert_database(State = #sink_state{length = Length, list = List, connection = Connection}) ->
 	{Users, Tweets} = convert_data(List, [], []),
-	mc_worker_api:insert(Connection, ?USER_COLLECTION, Users),
-	mc_worker_api:insert(Connection, ?TWEET_COLLECTION, Tweets),
+%%	mc_worker_api:insert(Connection, ?USER_COLLECTION, Users),
+%%	mc_worker_api:insert(Connection, ?TWEET_COLLECTION, Tweets),
+
+	tcp_client:publish(?USER_COLLECTION, jsx:encode(Users)),
+	tcp_client:publish(?TWEET_COLLECTION, jsx:encode(Tweets)),
 
 	io:format("~n[~p] sink's database insertion with length = ~p~n~n", [self(), Length]),
 	TimerState = update_timer(State),
