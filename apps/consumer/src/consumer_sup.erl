@@ -26,8 +26,10 @@ init([]) ->
         period => MaxSecondsBetweenRestarts
     },
 
-    ChildSpecs = [
+    ClientSup = client_sup:get_specs(),
 
+    ChildSpecs = [
+        ClientSup
     ],
 
     {ok, {SupFlags, ChildSpecs}}.
