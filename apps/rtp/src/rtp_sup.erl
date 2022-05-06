@@ -36,6 +36,7 @@ init([]) ->
     Sink = sink:get_specs(),
     MessageBroker = message_broker:get_specs(),
     SinkMetrics = sink_metrics:get_specs(),
+    TCPClient = tcp_client:get_specs(),
 
     RetweetGroupSup = worker_group_utils:get_specs("retweet", retweet_processing:work_handler()),
     HashTagGroupSup = worker_group_utils:get_specs("hash_tag", hashtag_processing:work_handler()),
@@ -50,6 +51,7 @@ init([]) ->
         Aggregator,
         Sink,
         SinkMetrics,
+        TCPClient,
 
         RetweetGroupSup,
         HashTagGroupSup,
