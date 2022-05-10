@@ -10,6 +10,9 @@
 
 -export([start_link/0, init/1, get_specs/0]).
 
+-define(USERS_ATTRIBUTE, "Users").
+-define(TWEETS_ATTRIBUTE, "Tweets").
+
 start_link() ->
 	supervisor:start_link({local, ?MODULE}, ?MODULE, []).
 
@@ -25,7 +28,7 @@ init([]) ->
 	},
 
 	TCPClient = tcp_subscriber:get_specs(),
-	Client = client:get_specs(),
+	Client = client:get_specs(?TWEETS_ATTRIBUTE),
 
 	Children = [
 		TCPClient,
