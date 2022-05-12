@@ -8,22 +8,23 @@
 
 -export([process_tcp_data/3]).
 
-process_tcp_data(Data, Stash, PID) ->
-	{Message, IsJson} = is_json(Data),
-	return_stash(Message, Stash, PID, IsJson).
+process_tcp_data(LMessage, Stash, PID) ->
+	NewMessage = Stash++LMessage,
+	{_, IsJson} = is_json(NewMessage),
+	return_stash(NewMessage, PID, IsJson).
 
 is_json(LMessage) ->
 	BMessage = list_to_binary(LMessage),
 	IsJson = jsx:is_json(BMessage),
 	{BMessage, IsJson}.
 
-return_stash(BMessage, Stash, _, false) ->
-	LMessage = binary_to_list(BMessage),
-	Stash++LMessage;
-return_stash(Message, _, PID, true) ->
+return_stash(Message, _, false) ->
+	Message;
+return_stash(Message, PID, true) ->
 	ParseResult = parse_message(Message, true),
 	{Attribute, CMD, Param} = analyze_command(ParseResult, PID),
 
+	io:format("[~p] process Attribute=[~p].~n", [self(), Attribute]),
 	gen_server:cast(attribute_man, {Attribute, CMD, Param}),
 	[].
 
@@ -31,7 +32,9 @@ parse_message(_BMessage, false) ->
 	ErrorMessage = io_lib:format("[~p] PARSE ERROR! IS NOT JSON!~n", [self()]),
 	error_logger:error_msg(ErrorMessage),
 	exit(normal);
-parse_message(BMessage, true) ->
+parse_message(LMessage, true) ->
+	io:format("[~p] process Message=[~s].~n", [self(), LMessage]),
+	BMessage = list_to_binary(LMessage),
 	Map = jsx:decode(BMessage),
 	#{<<"topic">> := Attribute} = Map,
 	#{<<"command">> := CMD} = Map,
