@@ -15,7 +15,7 @@
 -record(tcp_client_state, {socket}).
 
 -define(ADDRESS, "127.0.0.1").
--define(PORT, 25250).
+-define(PORT, 25255).
 -define(OPTIONS, [{active, true}, {packet, 0}]).
 
 -define(SUBSCRIBE, "subscribe").
@@ -30,8 +30,8 @@ start_link() ->
 	gen_server:start_link({local, ?MODULE}, ?MODULE, [], []).
 
 init([]) ->
-	{ok, Socket} = gen_tcp:connect(?ADDRESS, ?PORT, ?OPTIONS),
-	NewState = #tcp_client_state{socket = Socket},
+	io:format("~n~n[~p] tcp_client called init.~n~n~n", [self()]),
+	NewState = #tcp_client_state{},
 	{ok, NewState, {continue, after_init}}.
 
 handle_continue(after_init, State = #tcp_client_state{socket = _Socket}) ->
@@ -40,9 +40,14 @@ handle_continue(after_init, State = #tcp_client_state{socket = _Socket}) ->
 handle_call(_Request, _From, State = #tcp_client_state{}) ->
 	{reply, ok, State}.
 
-handle_cast({send, Message}, State = #tcp_client_state{socket = Socket}) ->
-	io:format("~n~n[~p] tcp_socket send Message from Socket=[~p].~n~n~n", [self(), Socket]),
+handle_cast({send, Message}, State = #tcp_client_state{}) ->
+	{ok, Socket} = gen_tcp:connect(?ADDRESS, ?PORT, ?OPTIONS),
+	io:format("~n~n[~p] tcp_socket send Message from Socket=[~p].~n", [self(), Socket]),
+
 	gen_tcp:send(Socket, Message),
+	io:format("[~p] tcp_socket ACK from Socket=[~p].~n~n~n", [self(), Socket]),
+
+	gen_tcp:close(Socket),
 	{noreply, State};
 handle_cast(_Request, State = #tcp_client_state{}) ->
 	{noreply, State}.
