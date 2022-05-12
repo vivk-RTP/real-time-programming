@@ -8,13 +8,13 @@
 
 -behaviour(supervisor).
 
--export([start_link/0, init/1]).
--export([get_specs/0]).
+-export([start_link/1, init/1]).
+-export([get_specs/1]).
 
-start_link() ->
-	supervisor:start_link({local, ?MODULE}, ?MODULE, []).
+start_link(Port) ->
+	supervisor:start_link({local, ?MODULE}, ?MODULE, Port).
 
-init([]) ->
+init(Port) ->
 	io:format("[~p] tcp_server_sup superviser's `init` is called.~n", [self()]),
 
 	MaxRestarts = 5000,
@@ -25,7 +25,7 @@ init([]) ->
 		period => MaxSecondsBetweenRestarts
 	},
 
-	TCPSocketPoolSup = tcp_socket_pool_sup:get_specs(),
+	TCPSocketPoolSup = tcp_socket_pool_sup:get_specs(Port),
 	TCPServerScaler = tcp_server_scaler:get_specs(),
 
 	ChildSpecs = [
@@ -39,10 +39,10 @@ init([]) ->
 %%% External functions
 %%%===================================================================
 
-get_specs() ->
+get_specs(Port) ->
 	#{
 		id => tcp_server_sup,
-		start => {tcp_server_sup, start_link, []},
+		start => {tcp_server_sup, start_link, [Port]},
 		restart => permanent,
 		shutdown => infinity,
 		type => supervisor,

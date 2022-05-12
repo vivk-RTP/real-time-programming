@@ -46,6 +46,7 @@ handle_cast(_Request, State = #tcp_accept_socket_state{}) ->
 	{noreply, State}.
 
 handle_info({tcp, _Socket, RawData}, State = #tcp_accept_socket_state{stash = Stash}) ->
+	io:format("[~p] tcp_socket get Message from Socket=[~p].~n", [self(), _Socket]),
 	NewStash = tcp_message_process_utils:process_tcp_data(RawData, Stash, self()),
 	NewState = State#tcp_accept_socket_state{stash = NewStash},
 	{noreply, NewState};

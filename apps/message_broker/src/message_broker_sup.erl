@@ -12,6 +12,8 @@
 
 -export([init/1]).
 
+-define(PORT, 25250).
+
 start_link() ->
     supervisor:start_link({local, ?MODULE}, ?MODULE, []).
 
@@ -26,7 +28,7 @@ init([]) ->
         period => MaxSecondsBetweenRestarts
     },
 
-    TCPServerSup = tcp_server_sup:get_specs(),
+    TCPServerSup = tcp_server_sup:get_specs(?PORT),
     AttributeSup = attribute_sup:get_specs(),
 
     ChildSpecs = [
