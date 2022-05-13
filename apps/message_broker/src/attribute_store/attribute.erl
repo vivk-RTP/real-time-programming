@@ -12,7 +12,7 @@
 -export([init/1, handle_call/3, handle_cast/2, handle_info/2]).
 -export([get_specs/0]).
 
--record(attribute_state, {list}).
+-record(attribute_state, {list, queue}).
 
 %%%===================================================================
 %%% Spawning and gen_server implementation
@@ -28,6 +28,10 @@ init([]) ->
 handle_call(_Request, _From, State = #attribute_state{}) ->
 	{reply, ok, State}.
 
+handle_cast({setup, Attribute}, State = #attribute_state{}) ->
+	{ok, Queue} = esq:new("./data/persistant_data/"++Attribute),
+	NewState = State#attribute_state{queue = Queue},
+	{noreply, NewState};
 handle_cast({subscribe, PID}, State = #attribute_state{list = List}) ->
 	Contains = lists:member(PID, List),
 	NewState = subscribe(Contains, PID, State),
@@ -38,9 +42,9 @@ handle_cast({unsubscribe, PID}, State = #attribute_state{list = List}) ->
 	NewState = unsubscribe(Contains, PID, State),
 	io:format("[~p] attribute unsubscribe with NewState=[~p].~n", [self(), NewState]),
 	{noreply, NewState};
-handle_cast({publish, Message}, State = #attribute_state{list = List}) ->
+handle_cast({publish, Message}, State = #attribute_state{list = List, queue = Queue}) ->
 	io:format("[~p] attribute publish with List=[~p].~n", [self(), List]),
-	publish_loop(Message, List),
+	publish_queue(Queue, Message, List),
 	{noreply, State};
 handle_cast(_Request, State = #attribute_state{}) ->
 	{noreply, State}.
@@ -69,7 +73,8 @@ get_specs() ->
 
 subscribe(true, _PID, State = #attribute_state{list = _PIDs}) ->
 	State;
-subscribe(false, PID, State = #attribute_state{list = PIDs}) ->
+subscribe(false, PID, State = #attribute_state{list = PIDs, queue = Queue}) ->
+	dequeue(PID, Queue, length(PIDs)),
 	State#attribute_state{list = [PID|PIDs]}.
 
 unsubscribe(false, _PID, State = #attribute_state{list = _PIDs}) ->
@@ -77,6 +82,25 @@ unsubscribe(false, _PID, State = #attribute_state{list = _PIDs}) ->
 unsubscribe(true, PID, State = #attribute_state{list = PIDs}) ->
 	UnsubscribedList = lists:delete(PID, PIDs),
 	State#attribute_state{list = UnsubscribedList}.
+
+dequeue_analyze_loop([#{payload := Message}], PID, Queue) ->
+	tcp_socket:send_data(PID, Message),
+	Elements = esq:deq(Queue),
+	dequeue_analyze_loop(Elements, PID, Queue);
+dequeue_analyze_loop(_, _, _) ->
+	ok.
+
+dequeue(PID, Queue, Len) when Len =:= 0 ->
+	dequeue_analyze_loop(esq:deq(Queue), PID, Queue),
+	ok;
+dequeue(_, _, _) ->
+	ok.
+
+publish_queue(Queue, Message, Subs) when length(Subs) =:= 0 ->
+	ok = esq:enq(Message, Queue),
+	{ok, Message};
+publish_queue(_, Message, Subs) ->
+	publish_loop(Message, Subs).
 
 publish_loop(Message, [] = _PIDs) ->
 	{ok, Message};

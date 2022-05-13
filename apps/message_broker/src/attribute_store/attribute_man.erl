@@ -63,7 +63,7 @@ find_attribute_worker(Attribute, State = #attribute_man_state{attributes = Attri
 get_attribute_worker({ok, PID}, _Attribute, State = #attribute_man_state{attributes = _Attributes}) ->
 	{PID, State};
 get_attribute_worker(error, Attribute, State = #attribute_man_state{attributes = Attributes}) ->
-	AttributePID = attribute_pool:start_attribute(),
+	AttributePID = attribute_pool:start_attribute(Attribute),
 	NewAttributes = Attributes#{Attribute => AttributePID},
 	NewState = State#attribute_man_state{attributes = NewAttributes},
 	{AttributePID, NewState}.

@@ -9,7 +9,7 @@
 -behaviour(supervisor).
 
 -export([start_link/0, init/1]).
--export([get_specs/0, start_attribute/0]).
+-export([get_specs/0, start_attribute/1]).
 
 start_link() ->
 	supervisor:start_link({local, ?MODULE}, ?MODULE, []).
@@ -47,6 +47,8 @@ get_specs() ->
 		modules => [attribute_pool]
 	}.
 
-start_attribute() ->
+start_attribute(Attribute) ->
+	io:format("[~p] attribute_pool start new attripute=[~s].~n", [self(), Attribute]),
 	{ok, WorkerPID} = supervisor:start_child(attribute_pool, []),
+	gen_server:cast(WorkerPID, {setup, Attribute}),
 	WorkerPID.
