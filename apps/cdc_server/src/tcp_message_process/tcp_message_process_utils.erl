@@ -35,7 +35,7 @@ parse_message(_BMessage, false) ->
 parse_message(LMessage, true) ->
 	BMessage = list_to_binary(LMessage),
 	Map = jsx:decode(BMessage),
-	#{<<"command">> := Attribute} = Map,
+	#{<<"topic">> := Attribute} = Map,
 	#{<<"param">> := Param} = Map,
 	MParam = jsx:decode(Param),
 
