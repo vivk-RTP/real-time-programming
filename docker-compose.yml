@@ -1,0 +1,63 @@
+version: "3.9"
+
+services:
+    rtp_source:
+        container_name: rtp_source
+        image: alexburlacu/rtp-server:faf18x
+
+    mongo:
+        container_name: mongo
+        image: mongo
+
+    message_broker:
+        container_name: message_broker
+        depends_on:
+            - rtp_source
+        build:
+            context: ./apps/message_broker
+            dockerfile: Dockerfile
+        volumes:
+            - ./apps/message_broker/src:/message_broker/src
+        working_dir: /message_broker
+        tty: true
+        command: rebar3 shell
+
+    consumer:
+        container_name: consumer
+        depends_on:
+            - message_broker
+        build:
+            context: ./apps/consumer
+            dockerfile: Dockerfile
+        volumes:
+            - ./apps/consumer/src:/consumer/src
+        working_dir: /consumer
+        tty: true
+        command: rebar3 shell
+
+    cdc_server:
+        container_name: cdc_server
+        depends_on:
+            - mongo
+            - message_broker
+        build:
+            context: ./apps/cdc_server
+            dockerfile: Dockerfile
+        volumes:
+            - ./apps/cdc_server/src:/cdc_server/src
+        working_dir: /cdc_server
+        tty: true
+        command: rebar3 shell
+
+    rtp_client:
+        container_name: rtp_client
+        depends_on:
+            - cdc_server
+        build:
+            context: ./apps/rtp
+            dockerfile: Dockerfile
+        volumes:
+            - ./apps/rtp/src:/rtp/src
+        working_dir: /rtp
+        tty: true
+        command: rebar3 shell
