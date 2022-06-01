@@ -14,7 +14,7 @@
 
 -record(tcp_client_state, {socket}).
 
--define(ADDRESS, "127.0.0.1").
+-define(ADDRESS, "cdc_server").
 -define(PORT, 25255).
 -define(OPTIONS, [{active, true}, {packet, 0}]).
 

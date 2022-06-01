@@ -14,7 +14,7 @@
 
 -record(tcp_subscriber_state, {socket, subscriber}).
 
--define(ADDRESS, "127.0.0.1").
+-define(ADDRESS, "message_broker").
 -define(PORT, 25250).
 -define(OPTIONS, [{active, true}, {packet, 0}]).
 

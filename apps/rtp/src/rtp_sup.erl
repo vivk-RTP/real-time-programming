@@ -10,8 +10,8 @@
 
 -behaviour(supervisor).
 
--define(TWEET_1, "http://127.0.0.1:4000/tweets/1").
--define(TWEET_2, "http://127.0.0.1:4000/tweets/2").
+-define(TWEET_1, "http://rtp_source:4000/tweets/1").
+-define(TWEET_2, "http://rtp_source:4000/tweets/2").
 
 -export([start_link/0]).
 -export([init/1]).
