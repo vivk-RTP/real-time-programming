@@ -23,11 +23,11 @@ work_handler() ->
 %%%===================================================================
 
 send(Retweeted, _) when Retweeted =:= false ->
-	io:format("[~p] Retweeted=false!!~n", [self()]),
+%%	io:format("[~p] Retweeted=false!!~n", [self()]),
 	ok;
 send(_, Tweet) ->
 	#{<<"retweeted_status">> := Retweet} = Tweet,
-	io:format("[~p] Retweeted=true!!!!n", [self()]),
+%%	io:format("[~p] Retweeted=true!!!!n", [self()]),
 	gen_server:cast(?MESSAGE_BROKER, {publish, tweet, Retweet}).
 
 work(Tweet) ->

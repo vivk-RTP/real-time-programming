@@ -24,7 +24,6 @@ return_stash(Message, PID, true) ->
 	ParseResult = parse_message(Message, true),
 	{Attribute, CMD, Param} = analyze_command(ParseResult, PID),
 
-	io:format("[~p] process Attribute=[~p].~n", [self(), Attribute]),
 	gen_server:cast(attribute_man, {Attribute, CMD, Param}),
 	[].
 
@@ -33,7 +32,6 @@ parse_message(_BMessage, false) ->
 	error_logger:error_msg(ErrorMessage),
 	exit(normal);
 parse_message(LMessage, true) ->
-	io:format("[~p] process Message=[~s].~n", [self(), LMessage]),
 	BMessage = list_to_binary(LMessage),
 	Map = jsx:decode(BMessage),
 	#{<<"topic">> := Attribute} = Map,

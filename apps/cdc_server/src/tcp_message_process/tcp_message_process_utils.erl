@@ -23,7 +23,6 @@ return_stash(Message, _, false) ->
 return_stash(Message, _, true) ->
 	{Attribute, Map} = parse_message(Message, true),
 
-	io:format("[~p] process Attribute=[~p].~n", [self(), Attribute]),
 	gen_server:cast(sink_man, {Attribute, Map}),
 	[].
 
