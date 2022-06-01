@@ -34,8 +34,7 @@ init([]) ->
 	InitState = get_empty_state(),
 	TimerRef = create_timer(),
 	TimerState = InitState#sink_state{timer = TimerRef},
-%%	ConnectionStatus = mc_worker_api:connect([{database, ?DB_NAME}]),
-	ConnectionStatus = {ok, ok},
+	ConnectionStatus = mc_worker_api:connect([{database, ?DB_NAME}, {host, "mongo"}]),
 	NewState = analyze_connection(ConnectionStatus, TimerState),
 	io:format("[~p] sink's init call with new state = [~p].~n", [self(), NewState]),
 	{ok, NewState}.
@@ -98,7 +97,7 @@ get_empty_state(State = #sink_state{connection = Connection}) ->
 send_data([], _Connection) ->
 	ok;
 send_data([{data, Attribute, Message}|Tail], Connection) ->
-%%	mc_worker_api:insert(Connection, Attribute, Message),
+	mc_worker_api:insert(Connection, Attribute, Message),
 	tcp_client:publish(Attribute, jsx:encode(Message)),
 
 	send_data(Tail, Connection).

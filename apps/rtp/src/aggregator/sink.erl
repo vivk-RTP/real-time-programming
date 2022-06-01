@@ -34,7 +34,7 @@ init([]) ->
 	InitState = get_empty_state(),
 	TimerRef = create_timer(),
 	TimerState = InitState#sink_state{timer = TimerRef},
-	ConnectionStatus = mc_worker_api:connect([{database, ?DB_NAME}]),
+	ConnectionStatus = {ok, connection}, % mc_worker_api:connect([{database, ?DB_NAME}]),
 	NewState = analyze_connection(ConnectionStatus, TimerState),
 	io:format("[~p] sink's init call with new state = [~p].~n", [self(), NewState]),
 	{ok, NewState}.
